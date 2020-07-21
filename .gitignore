@@ -55,3 +55,7 @@ dmypy.json
 .env
 .venv
 .vscode
+
+
+# Jupyter/Ipython notebook checkpoints
+.ipynb_checkpoints/*
