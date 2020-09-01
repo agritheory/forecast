@@ -1,12 +1,13 @@
 from decimal import Decimal
+import typing
 
-import pytest
+import pytest  # type: ignore
 
 from forecast import Forecast
 
 
 @pytest.fixture
-def example_data():
+def example_data() -> Forecast:
     return Forecast(
         data=[
             [128, 117, 115, 125, 122, 137, 140, 129, 131, 114, 119, 137],
@@ -15,7 +16,7 @@ def example_data():
     )
 
 
-def test_percent_over_previous_period(example_data):
+def test_percent_over_previous_period(example_data: Forecast):
     percent_over_previous_period_output = [
         Decimal("137.5"),
         Decimal("135.3"),
@@ -31,11 +32,11 @@ def test_percent_over_previous_period(example_data):
         Decimal("146.3"),
     ]
     fc = example_data.percent_over_previous_period(10)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(percent_over_previous_period_output[index])
 
 
-def test_previous_period_to_current_period(example_data):
+def test_previous_period_to_current_period(example_data: Forecast):
     percent_over_previous_period_output = [
         125,
         123,
@@ -51,31 +52,31 @@ def test_previous_period_to_current_period(example_data):
         133,
     ]
     fc = example_data.previous_period_to_current_period()
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(percent_over_previous_period_output[index])
 
 
-def test_calculated_percent_over_previous_period(example_data):
+def test_calculated_percent_over_previous_period(example_data: Forecast):
     calculated_percent_over_previous_period_output = [
-        Decimal("126.6512549537648635311626321"),
-        Decimal("124.6248348745046257146640300"),
-        Decimal("116.5191545574636744486696216"),
-        Decimal("138.8097754293262904301542448"),
-        Decimal("123.6116248348745068064147290"),
-        Decimal("131.7173051519154580724091374"),
-        Decimal("142.8626155878467660631514490"),
-        Decimal("129.6908850726552202559105353"),
-        Decimal("119.5587846763540311734175247"),
-        Decimal("124.6248348745046257146640300"),
-        Decimal("140.8361955085865282466528469"),
-        Decimal("134.7569352708058147971570406"),
+        Decimal("126.6512549537648612945838838"),
+        Decimal("124.6248348745046235138705416"),
+        Decimal("116.5191545574636723910171730"),
+        Decimal("138.8097754293262879788639366"),
+        Decimal("123.6116248348745046235138705"),
+        Decimal("131.7173051519154557463672391"),
+        Decimal("142.8626155878467635402906209"),
+        Decimal("129.6908850726552179656538970"),
+        Decimal("119.5587846763540290620871863"),
+        Decimal("124.6248348745046235138705416"),
+        Decimal("140.8361955085865257595772787"),
+        Decimal("134.7569352708058124174372523"),
     ]
     fc = example_data.calculated_percent_over_previous_period()
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(calculated_percent_over_previous_period_output[index])
 
 
-def test_moving_average(example_data):
+def test_moving_average(example_data: Forecast):
     calculated_percent_over_previous_period_output = [
         Decimal("127.8333333333333285963817615993320941925048828125"),
         Decimal("128.0694444444444440496984802"),
@@ -91,11 +92,11 @@ def test_moving_average(example_data):
         Decimal("129.3329283836570750237285565"),
     ]
     fc = example_data.moving_average(12)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(calculated_percent_over_previous_period_output[index])
 
 
-def test_linear_approximiation(example_data):
+def test_linear_approximiation(example_data: Forecast):
     linear_approximiation_ouput = [
         Decimal("133.8333333333333333703407675"),
         Decimal("134.6666666666666667406815350"),
@@ -111,11 +112,11 @@ def test_linear_approximiation(example_data):
         Decimal("143.0000000000000004440892098"),
     ]
     fc = example_data.linear_approximiation(12)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(linear_approximiation_ouput[index])
 
 
-def test_least_squares_regression(example_data):
+def test_least_squares_regression(example_data: Forecast):
     least_squares_regression_ouput = [
         Decimal("132.8787878787878753428230993449687957763671875"),
         Decimal("133.6550116550116626967792399227619171142578125"),
@@ -131,11 +132,11 @@ def test_least_squares_regression(example_data):
         Decimal("141.41724941724942254950292408466339111328125"),
     ]
     fc = example_data.least_squares_regression(12)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(least_squares_regression_ouput[index])
 
 
-def test_second_degree_approximiation(example_data):
+def test_second_degree_approximiation(example_data: Forecast):
     second_degree_approximiation_ouput = [
         Decimal("132.181818181818385937731363810598850250244140625"),
         Decimal("132.63636363636391024556360207498073577880859375"),
@@ -151,11 +152,11 @@ def test_second_degree_approximiation(example_data):
         Decimal("134.654345654346656147026806138455867767333984375"),
     ]
     fc = example_data.second_degree_approximiation(12)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(second_degree_approximiation_ouput[index])
 
 
-def test_flexible_method(example_data):
+def test_flexible_method(example_data: Forecast):
     flexible_method_output = [
         Decimal("137.5000000000000111022302463"),
         Decimal("135.3000000000000109245945623"),
@@ -171,11 +172,11 @@ def test_flexible_method(example_data):
         Decimal("146.3000000000000118127729820"),
     ]
     fc = example_data.flexible_method(10, 12)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(flexible_method_output[index])
 
 
-def test_weighted_moving_average(example_data):
+def test_weighted_moving_average(example_data: Forecast):
     weights = [0.03, 0.03, 0.04, 0.05, 0.05, 0.05, 0.10, 0.10, 0.10, 0.15, 0.15, 0.15]
     weighted_moving_average_output = [
         Decimal("129.43999999999999772626324556767940521240234375"),
@@ -192,11 +193,11 @@ def test_weighted_moving_average(example_data):
         Decimal("129.9160559217140189502970315515995025634765625"),
     ]
     fc = example_data.weighted_moving_average(12, weights)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(weighted_moving_average_output[index])
 
 
-def test_linear_smoothing(example_data):
+def test_linear_smoothing(example_data: Forecast):
     linear_smoothing_output = [
         Decimal("129.256410256410248393876827321946620941162109375"),
         Decimal("129.47534516765284706707461737096309661865234375"),
@@ -212,11 +213,11 @@ def test_linear_smoothing(example_data):
         Decimal("129.9122965381596941369934938848018646240234375"),
     ]
     fc = example_data.linear_smoothing(12)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(linear_smoothing_output[index])
 
 
-def test_exponential_smoothing(example_data):
+def test_exponential_smoothing(example_data: Forecast):
     exponential_smoothing_output = [
         Decimal("130.520404130059972658273181878030300140380859375"),
         Decimal("130.520404130059972658273181878030300140380859375"),
@@ -232,27 +233,27 @@ def test_exponential_smoothing(example_data):
         Decimal("130.520404130059972658273181878030300140380859375"),
     ]
     fc = example_data.exponential_smoothing(12, 0.3)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(exponential_smoothing_output[index])
 
 
-def test_exponential_smoothing_with_trend_and_seasonality(example_data):
+def test_exponential_smoothing_with_trend_and_seasonality(example_data: Forecast):
     exponential_smoothing__with_trend_and_seasonality_output = [
-        Decimal("136.5326570985329249670502048"),
-        Decimal("127.9506137514868969066586413"),
-        Decimal("121.3897907066283345179305391"),
-        Decimal("116.3450257469586410531578263"),
-        Decimal("132.5471313397843412718543269"),
-        Decimal("123.4547828680023790648772415"),
-        Decimal("135.1071713329402470308635860"),
-        Decimal("142.2074997897988640658716488"),
-        Decimal("130.0763493675806439238778370"),
-        Decimal("126.0415088379730473332492457"),
-        Decimal("119.9807622457950906651202726"),
-        Decimal("130.6267120292483950413402586"),
+        Decimal("136.5326570985329311640232509"),
+        Decimal("127.9506137514868870403719148"),
+        Decimal("121.3897907066283264551706685"),
+        Decimal("116.3450257469586374872238588"),
+        Decimal("132.5471313397843351124037680"),
+        Decimal("123.4547828680023563845494869"),
+        Decimal("135.1071713329402423530638990"),
+        Decimal("142.2074997897988696648761586"),
+        Decimal("130.0763493675806282146035249"),
+        Decimal("126.0415088379730379914807878"),
+        Decimal("119.9807622457950702298346505"),
+        Decimal("130.6267120292483761608965989"),
     ]
     fc = example_data.exponential_smoothing_with_trend_and_seasonality(12, 12, 0.3, 0.4)
-    for index, period in enumerate(fc.forecast):
+    for index, period in enumerate(typing.cast(typing.List[Decimal], fc.forecast)):
         assert period == Decimal(
             exponential_smoothing__with_trend_and_seasonality_output[index]
         )

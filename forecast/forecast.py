@@ -2,30 +2,29 @@ from __future__ import annotations
 
 import typing
 from decimal import Decimal
-import pandas as pd # type: ignore
-from scipy import stats # type: ignore
-import numpy as np # type: ignore
+import pandas as pd  # type: ignore
+from scipy import stats  # type: ignore
+import numpy as np  # type: ignore
 
 
 class Forecast:
     data: typing.Sequence[typing.Sequence[typing.Union[Decimal, int, float]]]
-    forecast: typing.Optional[
-        typing.Sequence[
-            typing.Union[Decimal, int, float
-            ]
-        ]
-    ] = None
+    forecast: typing.Optional[typing.List[Decimal]] = None
 
     def __init__(self, **kwargs):
+        self.data = kwargs.get("data")
         self(**kwargs)
 
     def __call__(
         self,
-        data: typing.Sequence[typing.Sequence[typing.Union[Decimal, int, float]]],
-        **kwargs) -> Forecast:
+        data: typing.Optional[
+            typing.Sequence[typing.Sequence[typing.Union[Decimal, int, float]]]
+        ],
+        **kwargs
+    ) -> Forecast:
         if not self.data and not data:
             raise Exception("Cannot forecast without data")
-        self.data = data if data else []
+        self.data = data # type: ignore
         return self
 
     def percent_over_previous_period(
@@ -45,7 +44,7 @@ class Forecast:
         return self
 
     def previous_period_to_current_period(self) -> Forecast:
-        self.forecast = self.data[-1]
+        self.forecast = self.data[-1]  # type: ignore
         return self
 
     def moving_average(self, periods: int) -> Forecast:
@@ -174,19 +173,19 @@ class Forecast:
         beta = Decimal(beta)
 
         # Calculate seasonality indices
-        total_units = Decimal(sum(self.data[-2]) + sum(self.data[-1])) # type: ignore
+        total_units = Decimal(sum(self.data[-2]) + sum(self.data[-1]))  # type: ignore
         seasonality = [
-            Decimal((data_n_minus_1 + self.data[-2][i]) / total_units * periods) # type: ignore
+            Decimal((data_n_minus_1 + self.data[-2][i]) / total_units * periods)  # type: ignore
             for i, data_n_minus_1 in enumerate(self.data[-1])
         ]
 
-        averages = [self.data[-1][0] / seasonality[0]] # type: ignore
+        averages = [self.data[-1][0] / seasonality[0]]  # type: ignore
         trends = [Decimal("0")]
 
         for i in range(periods):
-            A_t = alpha * (self.data[-1][i] / seasonality[i]) + (1 - alpha) * ( # type: ignore
+            A_t = alpha * (self.data[-1][i] / seasonality[i]) + (1 - alpha) * (  # type: ignore
                 averages[i - 1] + trends[i - 1]
-            ) 
+            )
             T_t = beta * (A_t - averages[i - 1]) + (1 - beta) * (trends[i - 1])
             averages.append(A_t)
             trends.append(T_t)
