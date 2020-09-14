@@ -57,18 +57,18 @@ def test_previous_period_to_current_period(example_data):
 
 def test_calculated_percent_over_previous_period(example_data):
     calculated_percent_over_previous_period_output = [
-        Decimal("126.6512549537648635311626321"),
-        Decimal("124.6248348745046257146640300"),
-        Decimal("116.5191545574636744486696216"),
-        Decimal("138.8097754293262904301542448"),
-        Decimal("123.6116248348745068064147290"),
-        Decimal("131.7173051519154580724091374"),
-        Decimal("142.8626155878467660631514490"),
-        Decimal("129.6908850726552202559105353"),
-        Decimal("119.5587846763540311734175247"),
-        Decimal("124.6248348745046257146640300"),
-        Decimal("140.8361955085865282466528469"),
-        Decimal("134.7569352708058147971570406"),
+        Decimal("126.6512549537648612945838838"),
+        Decimal("124.6248348745046235138705416"),
+        Decimal("116.5191545574636723910171730"),
+        Decimal("138.8097754293262879788639366"),
+        Decimal("123.6116248348745046235138705"),
+        Decimal("131.7173051519154557463672391"),
+        Decimal("142.8626155878467635402906209"),
+        Decimal("129.6908850726552179656538970"),
+        Decimal("119.5587846763540290620871863"),
+        Decimal("124.6248348745046235138705416"),
+        Decimal("140.8361955085865257595772787"),
+        Decimal("134.7569352708058124174372523"),
     ]
     fc = example_data.calculated_percent_over_previous_period()
     for index, period in enumerate(fc.forecast):
