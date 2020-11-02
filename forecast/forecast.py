@@ -57,7 +57,7 @@ class Forecast:
         self.forecast = moving_average
         return self
 
-    def linear_approximiation(self, periods: int) -> 'Forecast':
+    def linear_approximation(self, periods: int) -> 'Forecast':
         _data = self._flat_data if periods > len(self.data[-1]) else self.data[-1]
         print(len(_data))
         if periods - 1 > len(_data):

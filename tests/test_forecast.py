@@ -95,8 +95,8 @@ def test_moving_average(example_data):
         assert period == Decimal(calculated_percent_over_previous_period_output[index])
 
 
-def test_linear_approximiation(example_data):
-    linear_approximiation_ouput = [
+def test_linear_approximation(example_data):
+    linear_approximation_ouput = [
         Decimal("133.8333333333333333703407675"),
         Decimal("134.6666666666666667406815350"),
         Decimal("135.5000000000000001110223025"),
@@ -110,9 +110,9 @@ def test_linear_approximiation(example_data):
         Decimal("142.1666666666666670737484424"),
         Decimal("143.0000000000000004440892098"),
     ]
-    fc = example_data.linear_approximiation(12)
+    fc = example_data.linear_approximation(12)
     for index, period in enumerate(fc.forecast):
-        assert period == Decimal(linear_approximiation_ouput[index])
+        assert period == Decimal(linear_approximation_ouput[index])
 
 
 def test_least_squares_regression(example_data):
