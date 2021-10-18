@@ -15,6 +15,7 @@ def example_data():
     )
 
 
+@pytest.fixture
 def example_data_with_zeros():
     return Forecast(
         data=[
@@ -86,20 +87,20 @@ def test_calculated_percent_over_previous_period(example_data):
 
 def test_calculated_percent_over_previous_period_with_zeros(example_data_with_zeros):
     calculated_percent_over_previous_period_with_zeros_output = [
-        Decimal("137.5"),
-        Decimal("135.3"),
-        Decimal("126.5"),
-        Decimal("150.7"),
-        Decimal("134.2"),
-        Decimal("143.0"),
-        Decimal("155.1"),
-        Decimal("140.8"),
-        Decimal("129.8"),
-        Decimal("135.3"),
-        Decimal("0.0"),
-        Decimal("0.0"),
+        Decimal("104.1941875825627476882430647"),
+        Decimal("102.5270805812417437252311757"),
+        Decimal("95.85865257595772787318361955"),
+        Decimal("114.1968295904887714663143989"),
+        Decimal("101.6935270805812417437252312"),
+        Decimal("108.3619550858652575957727873"),
+        Decimal("117.5310435931307793923381770"),
+        Decimal("106.6948480845442536327608983"),
+        Decimal("98.35931307793923381770145310"),
+        Decimal("102.5270805812417437252311757"),
+        Decimal("0E-28"),
+        Decimal("0E-28"),
     ]
-    fc = example_data.calculated_percent_over_previous_period()
+    fc = example_data_with_zeros.calculated_percent_over_previous_period()
     for index, period in enumerate(fc.forecast):
         assert period == Decimal(
             calculated_percent_over_previous_period_with_zeros_output[index]
