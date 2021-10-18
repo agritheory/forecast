@@ -12,6 +12,7 @@ class Forecast:
 
     def __init__(self, **kwargs):
         self._idx = 1
+        self.zero_value = Decimal(0)
         self(**kwargs)
 
     def __call__(
@@ -20,7 +21,7 @@ class Forecast:
             typing.Sequence[typing.Sequence[typing.Union[Decimal, int, float]]]
         ],
         **kwargs
-    ) -> 'Forecast':
+    ) -> "Forecast":
         if not self.data and not data:
             raise Exception("Cannot forecast without data")
         self.data = data if data else []
@@ -28,25 +29,29 @@ class Forecast:
 
     def percent_over_previous_period(
         self, percent: typing.Union[float, Decimal]
-    ) -> 'Forecast':
+    ) -> "Forecast":
         percent = Decimal(percent)
         self.forecast = [
-            Decimal(period) * (1 + percent / 100) for period in self.data[-1]
+            (Decimal(period) * (1 + percent / 100)) if percent else self.zero_value
+            for period in self.data[-1]
         ]
         return self
 
-    def calculated_percent_over_previous_period(self) -> 'Forecast':
+    def calculated_percent_over_previous_period(self) -> "Forecast":
         n_minus_2_data = Decimal(sum(self.data[-2]))
         n_minus_1_data = Decimal(sum(self.data[-1]))
         percent = Decimal((n_minus_1_data / n_minus_2_data - 1) * 100)
-        self.forecast = [Decimal(n) * (1 + percent / 100) for n in self.data[-1]]
+        self.forecast = [
+            Decimal(n) * (1 + percent / 100) if percent else self.zero_value
+            for n in self.data[-1]
+        ]
         return self
 
-    def previous_period_to_current_period(self) -> 'Forecast':
+    def previous_period_to_current_period(self) -> "Forecast":
         self.forecast = self.data[-1]  # type: ignore
         return self
 
-    def moving_average(self, periods: int) -> 'Forecast':
+    def moving_average(self, periods: int) -> "Forecast":
         _data = self._flat_data if periods > len(self.data[-1]) else self.data[-1]
         if periods - 1 > len(self._flat_data):
             raise Exception("Cannot forecast for more periods than data exists")
@@ -57,16 +62,15 @@ class Forecast:
         self.forecast = moving_average
         return self
 
-    def linear_approximation(self, periods: int) -> 'Forecast':
+    def linear_approximation(self, periods: int) -> "Forecast":
         _data = self._flat_data if periods > len(self.data[-1]) else self.data[-1]
-        print(len(_data))
         if periods - 1 > len(_data):
             raise Exception("Cannot forecast for more periods than data exists")
         slope = Decimal((_data[-1] - _data[-periods + 1]) / periods)
         self.forecast = [Decimal(_data[-1]) + (slope * (i + 1)) for i in range(periods)]
         return self
 
-    def least_squares_regression(self, periods: int) -> 'Forecast':
+    def least_squares_regression(self, periods: int) -> "Forecast":
         x = range(1, periods + 1)
         _data = self._flat_data if periods > len(self.data[-1]) else self.data[-1]
         if periods - 1 > len(_data):
@@ -78,7 +82,7 @@ class Forecast:
         ]
         return self
 
-    def second_degree_approximiation(self, periods: int) -> 'Forecast':
+    def second_degree_approximiation(self, periods: int) -> "Forecast":
         x = range(1, periods + 1)
         _data = self._flat_data if periods > len(self.data[-1]) else self.data[-1]
         if periods - 1 > len(_data):
@@ -92,7 +96,7 @@ class Forecast:
 
     def flexible_method(
         self, percent: typing.Union[float, Decimal], periods: int
-    ) -> 'Forecast':
+    ) -> "Forecast":
         _data = self._flat_data if periods > len(self.data[-1]) else self.data[-1]
         if periods - 1 > len(_data):
             raise Exception("Cannot forecast for more periods than data exists")
@@ -107,7 +111,7 @@ class Forecast:
 
     def weighted_moving_average(
         self, periods: int, weights: typing.Union[list, tuple, np.array]
-    ) -> 'Forecast':
+    ) -> "Forecast":
         _data = self._flat_data if periods > len(self.data[-1]) else self.data[-1]
         if periods - 1 > len(_data):
             raise Exception("Cannot forecast for more periods than data exists")
@@ -131,7 +135,7 @@ class Forecast:
         self.forecast = [Decimal(n) for n in weighted_moving_average]
         return self
 
-    def linear_smoothing(self, periods: int) -> 'Forecast':
+    def linear_smoothing(self, periods: int) -> "Forecast":
         _data = self._flat_data if periods > len(self.data[-1]) else self.data[-1]
         if periods - 1 > len(_data):
             raise Exception("Cannot forecast for more periods than data exists")
@@ -150,7 +154,7 @@ class Forecast:
 
     def exponential_smoothing(
         self, periods: int, alpha: typing.Union[float, Decimal]
-    ) -> 'Forecast':
+    ) -> "Forecast":
         _data = self._flat_data if periods > len(self.data[-1]) else self.data[-1]
         if periods - 1 > len(_data):
             raise Exception("Cannot forecast for more periods than data exists")
@@ -168,7 +172,7 @@ class Forecast:
         periods: int,
         alpha: typing.Union[float, Decimal],
         beta: typing.Union[float, Decimal],
-    ) -> 'Forecast':
+    ) -> "Forecast":
         alpha = Decimal(alpha)
         beta = Decimal(beta)
 

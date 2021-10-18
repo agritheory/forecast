@@ -15,6 +15,15 @@ def example_data():
     )
 
 
+def example_data_with_zeros():
+    return Forecast(
+        data=[
+            [128, 117, 115, 125, 122, 137, 140, 129, 131, 114, 119, 137],
+            [125, 123, 115, 137, 122, 130, 141, 128, 118, 123, 0, 0],
+        ]
+    )
+
+
 def test_percent_over_previous_period(example_data):
     percent_over_previous_period_output = [
         Decimal("137.5"),
@@ -73,6 +82,28 @@ def test_calculated_percent_over_previous_period(example_data):
     fc = example_data.calculated_percent_over_previous_period()
     for index, period in enumerate(fc.forecast):
         assert period == Decimal(calculated_percent_over_previous_period_output[index])
+
+
+def test_calculated_percent_over_previous_period_with_zeros(example_data_with_zeros):
+    calculated_percent_over_previous_period_with_zeros_output = [
+        Decimal("137.5"),
+        Decimal("135.3"),
+        Decimal("126.5"),
+        Decimal("150.7"),
+        Decimal("134.2"),
+        Decimal("143.0"),
+        Decimal("155.1"),
+        Decimal("140.8"),
+        Decimal("129.8"),
+        Decimal("135.3"),
+        Decimal("0.0"),
+        Decimal("0.0"),
+    ]
+    fc = example_data.calculated_percent_over_previous_period()
+    for index, period in enumerate(fc.forecast):
+        assert period == Decimal(
+            calculated_percent_over_previous_period_with_zeros_output[index]
+        )
 
 
 def test_moving_average(example_data):
