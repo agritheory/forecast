@@ -143,7 +143,7 @@ class Forecast:
         weights = np.array([n / W for n in range(1, periods + 1)])
         linear_smoothing = _data[-periods:]
 
-        for i in range(12):
+        for i in range(len(self.data[-1])):
             linear_smoothing.append(
                 sum(weights * np.array(linear_smoothing[i : i + periods]))
             )
@@ -163,7 +163,7 @@ class Forecast:
 
         for i, data in enumerate(tmp):
             smoothed.append(alpha * data + (1 - alpha) * smoothed[i])
-        self.forecast = [Decimal(smoothed[-1])] * 12
+        self.forecast = [Decimal(smoothed[-1])] * (len(self.data[-1]) -1)
         return self
 
     def exponential_smoothing_with_trend_and_seasonality(
