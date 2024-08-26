@@ -1,9 +1,9 @@
-name: Convert Jupyter NB to HTML
+name: Convert Jupyter NoteBook to HTML
 
 on:
   push:
     branches:
-      - jupyter_to_html  # update after testing
+      - main
 
 jobs:
   checkout:
