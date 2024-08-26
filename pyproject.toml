@@ -17,8 +17,8 @@ scipy = "^1.14.0"
 
 [tool.poetry.dev-dependencies]
 nbdev = "^2.3.25"
-pytest = "^5.4.1"
-pytest-cov = "^2.8.1"
+pytest = "^8.0.0"
+pytest-cov = "^5.0.0"
 matplotlib = "^3.3.0"
 jupyterlab = "^2.2.5"
 black = "^20.8b1"
