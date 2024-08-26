@@ -61,8 +61,7 @@ jobs:
       - name: Convert Notebooks to HTML
         run: |  # use script to extract images?
           source .venv/bin/activate
-          jupyter nbconvert --execute --to html ${{ github.workspace }}/example_calcs.ipynb
-          mv ${{ github.workspace }}/example_calcs.html ${{ github.workspace }}/docs/example_calcs.html
+          jupyter nbconvert --execute --output-dir='${{ github.workspace }}/docs' --to html ${{ github.workspace }}/example_calcs.ipynb
 
       - name: Commit notebook conversion changes
         uses: stefanzweifel/git-auto-commit-action@v5
