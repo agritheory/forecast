@@ -56,7 +56,7 @@ jobs:
         run: poetry install --no-interaction --no-root
     
       - name: Install project
-        run: poetry install --no interaction
+        run: poetry install --no-interaction
 
       - name: Convert Notebooks to HTML
         run: |  # use script to extract images?
