@@ -39,7 +39,7 @@ class Forecast:
 		# Verify data is of Decimal type
 		for n in self.data:
 			for m in n:
-				if type(m) != Decimal:
+				if not isinstance(m, Decimal):
 					raise TypeError("Data must be of type Decimal.")
 
 		return self
@@ -47,7 +47,7 @@ class Forecast:
 	##############################
 
 	def percent_over_previous_period(self, percent: Decimal) -> "Forecast":
-		if type(percent) != Decimal:
+		if not isinstance(percent, Decimal):
 			raise TypeError("Percent must be of type Decimal.")
 
 		self.forecast = [
@@ -140,7 +140,7 @@ class Forecast:
 
 	def flexible_method(self, percent: Decimal, periods: int) -> "Forecast":
 		# Confirm percent is of Decimal type
-		if type(percent) != Decimal:
+		if not isinstance(percent, Decimal):
 			raise TypeError("percent must be of type Decimal.")
 
 		_data = self.__flat_data if periods > len(self.data[-1]) else self.data[-1]
@@ -163,7 +163,7 @@ class Forecast:
 	def weighted_moving_average(self, periods: int, weights: list | tuple) -> "Forecast":
 		# Confirm weights are of Decimal type
 		for n in weights:
-			if type(n) != Decimal:
+			if not isinstance(n, Decimal):
 				raise TypeError("Weights must be of type Decimal.")
 
 		_data = self.__flat_data if periods > len(self.data[-1]) else self.data[-1]
@@ -218,7 +218,7 @@ class Forecast:
 	##############################
 
 	def exponential_smoothing(self, periods: int, alpha: Decimal) -> "Forecast":
-		if type(alpha) != Decimal:
+		if not isinstance(alpha, Decimal):
 			raise TypeError("alpha must be of type Decimal.")
 
 		_data = self.__flat_data if periods > len(self.data[-1]) else self.data[-1]
@@ -243,9 +243,9 @@ class Forecast:
 		alpha: Decimal,
 		beta: Decimal,
 	) -> "Forecast":
-		if type(alpha) != Decimal:
+		if not isinstance(alpha, Decimal):
 			raise TypeError("alpha must be of type Decimal.")
-		if type(beta) != Decimal:
+		if not isinstance(beta, Decimal):
 			raise TypeError("beta must be of type Decimal.")
 
 		# Calculate seasonality indices
@@ -305,7 +305,7 @@ def polyfit(xdata, ydata, deg, rcond=None, full=False, w=None):
 	xdata and ydata are list of Decimal objects.
 	"""
 
-	if type(deg) != int:
+	if not isinstance(deg, int):
 		raise TypeError("deg must be an integer.")
 
 	# We have rcond and w equal to None in our case
