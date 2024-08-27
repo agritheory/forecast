@@ -286,7 +286,6 @@ class Forecast:
 
 
 def mean(x):
-
 	"""Calculate the mean value of list of Decimal objects."""
 	if len(x) == 0:
 		raise ValueError("List must not be empty.")
@@ -298,7 +297,6 @@ def mean(x):
 
 
 def polyfit(xdata, ydata, deg, rcond=None, full=False, w=None):
-
 	"""
 	Least-squares fit of polynomial to data.
 	Replacement for np.polyfit.
@@ -395,7 +393,6 @@ def polyfit(xdata, ydata, deg, rcond=None, full=False, w=None):
 
 
 def linregress(x, y, alternative="two-sided"):
-
 	"""Calculate a linear least-squares regression for two sets of measurements.
 	x and y must be list of Decimal objects
 	The implementation copies that of scipy.linregress.
