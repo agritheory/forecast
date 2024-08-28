@@ -61,7 +61,10 @@ jobs:
       - name: Convert Notebooks to Markdown
         run: |  # use script to extract images?
           source .venv/bin/activate
+          rm -rf '${{ github.workspace }}/docs/*.*'
           jupyter nbconvert --execute --output-dir='${{ github.workspace }}/docs' --to markdown ${{ github.workspace }}/example_calcs.ipynb
+          mv '${{ github.workspace }}/docs/example_calcs_files/*.png' '${{ github.workspace }}/docs/'
+          rm -rf '${{ github.workspace }}/docs/example_calcs_files'
 
       - name: Commit notebook conversion changes
         uses: stefanzweifel/git-auto-commit-action@v5
