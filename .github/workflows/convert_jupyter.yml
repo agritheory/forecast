@@ -1,0 +1,73 @@
+name: Convert Jupyter NoteBook to HTML
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip
+          restore-keys: ${{ runner.os }}-pip
+      
+  nbconvert:
+    name: nbconvert
+    needs: checkout
+    runs-on: ubuntu-latest
+    concurrency: nbconvert
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          virtualenvs-path: .venv
+
+      # Load cached venv if cache exists
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      # Install dependencies if cache doesn't exist
+      - name: Install Python packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+    
+      - name: Install project
+        run: poetry install --no-interaction
+
+      - name: Convert Notebooks to HTML
+        run: |  # use script to extract images?
+          source .venv/bin/activate
+          jupyter nbconvert --execute --output-dir='${{ github.workspace }}/docs' --to html ${{ github.workspace }}/example_calcs.ipynb
+
+      - name: Commit notebook conversion changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          file_pattern: 'docs/*.html'
+          commit_message: 'docs: Automatic commit of updated Jupyter notebook conversions'
+          commit_user_name: AgriTheory
+          commit_user_email: support@agritheory.dev
+          commit_author: AgriTheory <support@agritheory.dev>
