@@ -69,7 +69,7 @@ commands =
 [testenv:py310]
 description = run pytest on 3.10
 commands =
-    pytest tests/ -s --disable-warnings
+    pytest tests/ --disable-warnings -s
 
 [testenv:py311]
 description = run pytest and coverage on 3.11

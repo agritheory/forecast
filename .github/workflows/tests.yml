@@ -51,7 +51,9 @@ jobs:
       - name: Run linting and tests with tox
         run: python -m tox run
 
+      # Add coverage comment only if the Python env created the report
       - name: Pytest coverage comment
+        if: ${{ hashFiles('coverage.xml') != '' }}
         uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: ${{ github.workspace }}/pytest-coverage.txt
