@@ -58,16 +58,16 @@ jobs:
       - name: Install project
         run: poetry install --no-interaction
 
-      - name: Convert Notebooks to HTML
+      - name: Convert Notebooks to Markdown
         run: |  # use script to extract images?
           source .venv/bin/activate
-          jupyter nbconvert --execute --output-dir='${{ github.workspace }}/docs' --to html ${{ github.workspace }}/example_calcs.ipynb
+          jupyter nbconvert --execute --output-dir='${{ github.workspace }}/docs' --to markdown ${{ github.workspace }}/example_calcs.ipynb
 
       - name: Commit notebook conversion changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          file_pattern: 'docs/*.html'
-          commit_message: 'docs: Automatic commit of updated Jupyter notebook conversions'
+          file_pattern: 'docs/*.md'
+          commit_message: 'docs: Automatic commit of updated Jupyter notebook'
           commit_user_name: AgriTheory
           commit_user_email: support@agritheory.dev
           commit_author: AgriTheory <support@agritheory.dev>
