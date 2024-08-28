@@ -66,7 +66,7 @@ jobs:
       - name: Commit notebook conversion changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          file_pattern: 'docs/*.md, docs/*.png'
+          file_pattern: 'docs/*.md docs/*.png'
           commit_message: 'docs: Automatic commit of updated Jupyter notebook'
           commit_user_name: AgriTheory
           commit_user_email: support@agritheory.dev
