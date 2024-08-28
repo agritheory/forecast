@@ -28,6 +28,7 @@ repos:
     rev: 951ccf4d5bb0d692b457a5ebc4215d755618eb68
     hooks:
       - id: black
+        args: ['--line-length', '99']
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.12.0
