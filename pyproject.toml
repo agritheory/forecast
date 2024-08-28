@@ -58,10 +58,12 @@ commands_pre =
     poetry install
     python -m pip install flake8
     python -m pip install mypy
+    python -m pip install black git+https://github.com/agritheory/black.git
     mypy ./ --install-types --non-interactive
 commands = 
     flake8 ./forecast
     mypy ./forecast --ignore-missing-imports
+    black --check .
 
 [testenv:py310]
 description = run pytest on 3.10
