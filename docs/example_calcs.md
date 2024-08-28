@@ -29,6 +29,9 @@ import matplotlib.pyplot as plt
 %matplotlib inline
 ```
 
+    Matplotlib is building the font cache; this may take a moment.
+
+
 
 ```python
 # Create dataset (DataFrame for presentation purposes)
