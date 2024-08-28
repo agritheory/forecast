@@ -174,9 +174,7 @@ def test_moving_average(example_data):
 	]
 	fc = example_data.moving_average(12)
 	for index, period in enumerate(fc.forecast):
-		assert abs(period - calculated_percent_over_previous_period_output[index]) < Decimal(
-			"1e-14"
-		)
+		assert abs(period - calculated_percent_over_previous_period_output[index]) < Decimal("1e-14")
 
 
 def test_linear_approximation(example_data):
@@ -352,6 +350,6 @@ def test_exponential_smoothing_with_trend_and_seasonality(example_data):
 		12, 12, Decimal(0.3), Decimal(0.4)
 	)
 	for index, period in enumerate(fc.forecast):
-		assert abs(
-			period - exponential_smoothing__with_trend_and_seasonality_output[index]
-		) < Decimal("1e-13")
+		assert abs(period - exponential_smoothing__with_trend_and_seasonality_output[index]) < Decimal(
+			"1e-13"
+		)

@@ -114,9 +114,7 @@ class Forecast:
 		y = _data[-periods:]
 
 		slope, intercept, _, _, _ = linregress(x, y)
-		self.forecast = [
-			(Decimal(i) * slope) + intercept for i in range(periods + 1, periods + 13)
-		]
+		self.forecast = [(Decimal(i) * slope) + intercept for i in range(periods + 1, periods + 13)]
 
 		return self
 
@@ -130,8 +128,7 @@ class Forecast:
 		y = _data[-periods:]
 		c, b, a = polyfit(x, y, deg=2)
 		self.forecast = [
-			a + (b * Decimal(i)) + (c * (Decimal(i) ** 2))
-			for i in range(periods + 1, periods + 13)
+			a + (b * Decimal(i)) + (c * (Decimal(i) ** 2)) for i in range(periods + 1, periods + 13)
 		]
 
 		return self
@@ -149,9 +146,7 @@ class Forecast:
 
 		flexible_method = _data
 		for i in range(periods):
-			flexible_method.append(
-				flexible_method[i] * (self.__dvone + (percent / self.__dvhundred))
-			)
+			flexible_method.append(flexible_method[i] * (self.__dvone + (percent / self.__dvhundred)))
 		del flexible_method[:periods]
 
 		self.forecast = flexible_method
@@ -180,10 +175,7 @@ class Forecast:
 
 		for i in range(periods):
 			weighted_moving_average_data.append(
-				sum(
-					weights[j] * weighted_moving_average_data[i : i + periods][j]
-					for j in range(len(weights))
-				)
+				sum(weights[j] * weighted_moving_average_data[i : i + periods][j] for j in range(len(weights)))
 			)
 
 		# Remove the historical data needed for the first several forecast period calcs
@@ -205,9 +197,7 @@ class Forecast:
 
 		for i in range(12):
 			linear_smoothing_data.append(
-				sum(
-					weights[j] * linear_smoothing_data[i : i + periods][j] for j in range(len(weights))
-				)
+				sum(weights[j] * linear_smoothing_data[i : i + periods][j] for j in range(len(weights)))
 			)
 
 		del linear_smoothing_data[:periods]
