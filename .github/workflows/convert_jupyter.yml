@@ -62,9 +62,8 @@ jobs:
         run: |  # use script to extract images?
           source .venv/bin/activate
           rm -rf '${{ github.workspace }}/docs/*.*'
-          mkdir '${{ github.workspace }}/docs/example_calcs_files'
+          mkdir -p '${{ github.workspace }}/docs/example_calcs_files'
           jupyter nbconvert --execute --output-dir='${{ github.workspace }}/docs' --to markdown ${{ github.workspace }}/example_calcs.ipynb
-          ls -la
           cp '${{ github.workspace }}/docs/example_calcs_files/*.*' '${{ github.workspace }}/docs/'
           rm -rf '${{ github.workspace }}/docs/example_calcs_files/'
 
