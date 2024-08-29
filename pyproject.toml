@@ -74,7 +74,7 @@ commands =
 [testenv:py311]
 description = run pytest and coverage on 3.11
 commands =
-    pytest tests/ --cov=forecast --cov-report=xml --disable-warnings | tee pytest-coverage.txt
+    pytest tests/ --cov=forecast --cov-report=xml --disable-warnings > pytest-coverage.txt
 """
 
 [tool.semantic_release]
