@@ -1,4 +1,4 @@
-name: Convert Jupyter NoteBook to HTML
+name: Convert Jupyter NoteBook
 
 on:
   push:
