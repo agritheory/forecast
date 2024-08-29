@@ -56,5 +56,4 @@ jobs:
         if: ${{ hashFiles('coverage.xml') != '' }}
         uses: MishaKav/pytest-coverage-comment@main
         with:
-          pytest-coverage-path: ${{ github.workspace }}/pytest-coverage.txt
           pytest-xml-coverage-path: ${{ github.workspace }}/coverage.xml
