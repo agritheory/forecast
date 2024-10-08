@@ -53,11 +53,6 @@ def date_jun_30_23():
 
 
 @pytest.fixture
-def date_aug_10_23():
-	return datetime.date(2023, 8, 10)
-
-
-@pytest.fixture
 def date_nov_1_23():
 	return datetime.date(2023, 11, 1)
 
@@ -134,7 +129,7 @@ class TestBins:
 		assert p.start_date == date_jan_2_23
 		assert p.end_date == date_feb_13_23
 		assert p.periodicity == "ISO Week"
-		assert len(p.get_date_bins()) == 6
+		assert len(p.get_date_bins(inclusive=False)) == 6
 
 	def test_default_iso_week(self, date_jan_2_23):
 		output = [(datetime.date(2023, 1, 2), datetime.date(2023, 1, 8))]
@@ -144,7 +139,7 @@ class TestBins:
 
 	def test_partial_period_and_exclusive_end_date(self, date_jan_5_23, date_jan_7_23):
 		output = [(datetime.date(2023, 1, 5), datetime.date(2023, 1, 6))]
-		bins = Period().get_date_bins(date_jan_5_23, date_jan_7_23)
+		bins = Period().get_date_bins(date_jan_5_23, date_jan_7_23, inclusive=False)
 		assert bins == output
 
 	def test_inclusive_end_date(self, date_jan_5_23, date_jan_7_23):
@@ -413,9 +408,9 @@ class TestBins:
 
 	def test_cal_month(self, date_jan_7_23, date_mar_15_23):
 		output = [
-			(datetime.date(2023, 1, 7), datetime.date(2023, 1, 31)),
-			(datetime.date(2023, 2, 1), datetime.date(2023, 2, 28)),
-			(datetime.date(2023, 3, 1), datetime.date(2023, 3, 15)),
+			(datetime.date(2023, 1, 7), datetime.date(2023, 2, 6)),
+			(datetime.date(2023, 2, 7), datetime.date(2023, 3, 6)),
+			(datetime.date(2023, 3, 7), datetime.date(2023, 3, 15)),
 		]
 		bins = Period().get_date_bins(date_jan_7_23, date_mar_15_23, "Calendar Month", inclusive=True)
 		assert bins == output
@@ -430,13 +425,14 @@ class TestBins:
 		bins = Period().get_date_bins(date_jan_1_23, date_dec_31_23, "Calendar Quarter", inclusive=True)
 		assert bins == output
 
-	def test_cal_quarter_stub(self, date_jan_7_23, date_aug_10_23):
+	def test_cal_quarter_non_standard(self, date_jan_7_23):
 		output = [
-			(datetime.date(2023, 1, 7), datetime.date(2023, 3, 31)),
-			(datetime.date(2023, 4, 1), datetime.date(2023, 6, 30)),
-			(datetime.date(2023, 7, 1), datetime.date(2023, 8, 10)),
+			(datetime.date(2023, 1, 7), datetime.date(2023, 4, 6)),
+			(datetime.date(2023, 4, 7), datetime.date(2023, 7, 6)),
+			(datetime.date(2023, 7, 7), datetime.date(2023, 10, 6)),
 		]
-		bins = Period().get_date_bins(date_jan_7_23, date_aug_10_23, "Calendar Quarter", inclusive=True)
+		ed = datetime.date(2023, 10, 6)
+		bins = Period().get_date_bins(date_jan_7_23, ed, "Calendar Quarter", inclusive=True)
 		assert bins == output
 
 	def test_cal_quarter_oct_fy(self, date_nov_1_23, date_apr_30_24):
@@ -510,8 +506,8 @@ class TestConversions:
 			(datetime.date(2023, 11, 1), datetime.date(2024, 10, 31)),
 			(datetime.date(2024, 11, 1), datetime.date(2025, 10, 31)),
 		]
-		per = Period()
-		orig_bins = per.get_date_bins(date_nov_1_23, date_nov_1_25, "Calendar Quarter", inclusive=False)
+		per = Period(date_nov_1_23, date_nov_1_25, "Calendar Quarter")
+		orig_bins = per.get_date_bins(inclusive=False)
 		bins = per.convert_dates(orig_bins, "Annually")
 		assert bins == output
 
@@ -524,8 +520,8 @@ class TestConversions:
 				((datetime.date(2023, 3, 1), datetime.date(2023, 3, 31)), Decimal("3100")),
 			]
 		)
-		per = Period()
-		orig_bins = per.get_date_bins(date_jan_1_23, date_mar_31_23, "Calendar Month", inclusive=True)
+		per = Period(date_jan_1_23, date_mar_31_23, "Calendar Month")
+		orig_bins = per.get_date_bins(inclusive=True)
 		new_data = per.redistribute_data(data_3_cal_months, orig_bins, "Calendar Month")
 		assert new_data == output
 
@@ -533,8 +529,8 @@ class TestConversions:
 		output = OrderedDict(
 			[((datetime.date(2023, 1, 1), datetime.date(2023, 3, 31)), Decimal("6750"))]
 		)
-		per = Period()
-		orig_bins = per.get_date_bins(date_jan_1_23, date_mar_31_23, "Calendar Month", inclusive=True)
+		per = Period(date_jan_1_23, date_mar_31_23, "Calendar Month")
+		orig_bins = per.get_date_bins(inclusive=True)
 		new_data = per.redistribute_data(data_3_cal_months, orig_bins, "Calendar Quarter")
 		assert new_data == output
 
@@ -557,8 +553,8 @@ class TestConversions:
 				((datetime.date(2023, 3, 27), datetime.date(2023, 3, 31)), Decimal("500")),
 			]
 		)
-		per = Period()
-		orig_bins = per.get_date_bins(date_jan_1_23, date_mar_31_23, "Calendar Month", inclusive=True)
+		per = Period(date_jan_1_23, date_mar_31_23, "Calendar Month")
+		orig_bins = per.get_date_bins(inclusive=True)
 		new_data = per.redistribute_data(data_3_cal_months, orig_bins, "ISO Week")
 		assert new_data == output
 

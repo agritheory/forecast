@@ -94,12 +94,12 @@ class Period:
 		based periods falling within the time span defined by `start_date` to `end_date`. The step
 		tuple is determined by periodicity.
 
-		A step of "days" or "weeks" will not include a "stub" (incomplete) week - the returned
-		sequence of dates starts with the given `start_date` and calculates from there.
+		A step of "days", "weeks", or "months" will not include a "stub" (incomplete) week - the
+		returned sequence of dates starts with the given `start_date` and calculates from there.
 
 		:param start_date: datetime.date object; the date to start binning from
 		:param end_date: datetime.date object; the date to end binning (non-inclusive)
-		:param step: tuple of str, int; the string indicates the portion of the date that is
+		:param step: tuple (str, int); the string indicates the portion of the date that is
 		changing via step, and the integer is the step
 		:return: list of datetime.date objects
 		"""
@@ -117,11 +117,6 @@ class Period:
 				start_date += relativedelta(weeks=delta)
 
 		elif period == "months":
-			# Check if start_date is first day of period, if not, reset it to prior period start then add step
-			if start_date.day != 1:
-				r.append(start_date)
-				start_date = start_date.replace(day=1) + relativedelta(months=delta)
-
 			while start_date < end_date:
 				r.append(start_date)
 				start_date += relativedelta(months=delta)
@@ -157,7 +152,7 @@ class Period:
 		return [(p[0], p[1] + relativedelta(days=-1)) for p in pairwise(start_dates)]
 
 	def get_date_bins(
-		self, start_date=None, end_date=None, periodicity=None, inclusive=False, custom_days=None
+		self, start_date=None, end_date=None, periodicity=None, inclusive=True, custom_days=None
 	):
 		"""
 		Gets the starting dates for all periods falling within the time span from `start_date` to
@@ -167,13 +162,12 @@ class Period:
 		:param start_date: datetime.date object; the date to start binning from
 		:param end_date: datetime.date object; the date to end binning
 		:param periodicity: str | None; determines the binning periods within the time span from
-		`start_date` to `end_date`. Default is "ISO Week"
+		`start_date` to `end_date`. If None, uses class periodicity (default is "ISO Week")
 
 		Supports the following options for `periodicity`. For all ISO periodicity options, if
 		`start_date` is not a Monday or the first of an ISO year, the first bin will represent a
-		partial ("stub") period. For periodicity options of "Calendar Month", "Calendar Quarter",
-		and "Calendar Year", if `start_date` is not the first of that month/year, the first bin
-		will represent a partial month/year.
+		partial ("stub") period. For periodicity options of "Calendar Year", if `start_date` is
+		not the first of that month/year, the first bin will represent a partial month/year.
 		    - "ISO Week" (default): weekly bins starting on a Monday
 		    - "ISO Biweekly": bins of 2 ISO week periods
 		    - "ISO Month (4 Weeks)": monthly bins of 4 ISO week periods
@@ -191,10 +185,8 @@ class Period:
 		          given by `custom_days`
 		    - "Weekly": weekly bins starting on `start_date`'s weekday
 		    - "Biweekly": bins of 2-week periods, starting on `start_date`'s weekday
-		    - "Calendar Month": bins by calendar month. If `start_date` is not the first of the
-		          month, the first bin will be a partial month
-		    - "Calendar Quarter": bins of 3 calendar month periods. If `start_date` is not the
-		          first of the month, the first month of the first bin will be a partial month
+		    - "Calendar Month": bins by calendar month
+		    - "Calendar Quarter": bins of 3 calendar month periods
 		    - "Calendar Year": calendar year bins (Jan-Dec). If `start_date`
 		          is not Jan 1, the first bin will be a partial year
 		    - "Annually": yearly bins starting from `start_date`
