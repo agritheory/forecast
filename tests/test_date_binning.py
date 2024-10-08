@@ -723,9 +723,17 @@ class TestLabels:
 		labels = p.get_period_labels(bins)
 		assert labels == output
 
-	def test_custom_date_format(self, date_jan_1_23, date_mar_31_23):
-		output = ["Jan", "Feb", "Mar"]
-		fmt_str = "%b"
+	def test_custom_date_format_use_start_date(self, date_jan_1_23, date_mar_31_23):
+		output = ["Jan-01", "Feb-01", "Mar-01"]
+		fmt_str = "%b-%d"
+		p = Period(date_jan_1_23, date_mar_31_23, "Calendar Month")
+		bins = p.get_date_bins(inclusive=True)
+		labels = p.get_period_labels(bins, date_format_string=fmt_str, use_bin_start_date_for_label=True)
+		assert labels == output
+
+	def test_custom_date_format_use_end_date(self, date_jan_1_23, date_mar_31_23):
+		output = ["Jan-31", "Feb-28", "Mar-31"]
+		fmt_str = "%b-%d"
 		p = Period(date_jan_1_23, date_mar_31_23, "Calendar Month")
 		bins = p.get_date_bins(inclusive=True)
 		labels = p.get_period_labels(
