@@ -40,12 +40,13 @@ legacy_tox_ini = """
 min_version = 4
 requires =  
     tox-gh-actions>=3
-envlist = py310, py311, linting
+envlist = py310, py311, py312, linting
 
 [gh-actions]
 python =
-    3.10: py310, linting
+    3.10: py310
     3.11: py311
+    3.12: py312, linting
 
 [testenv]
 skip_install = true
@@ -72,7 +73,12 @@ commands =
     pytest tests/ --disable-warnings -s
 
 [testenv:py311]
-description = run pytest and coverage on 3.11
+description = run pytest on 3.11
+commands =
+    pytest tests/ --disable-warnings -s
+
+[testenv:py312]
+description = run pytest and coverage on 3.12
 commands =
     pytest tests/ --cov=forecast --cov-report=xml --disable-warnings -s
 """
