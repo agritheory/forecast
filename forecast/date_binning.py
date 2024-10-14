@@ -39,7 +39,7 @@ class Period:
 		period, delta = step
 		r = []
 
-		if type(delta) is int:
+		if isinstance(delta, int):
 			delta = [delta]
 		seq = cycle(delta)
 
@@ -206,10 +206,10 @@ class Period:
 		end_date = end_date or self.end_date
 		periodicity = periodicity or self.periodicity
 
-		if start_date is None or type(start_date) != datetime.date:
+		if start_date is None or not isinstance(start_date, datetime.date):
 			raise ValueError("Please provide a valid start date.")
 
-		if end_date is None or type(end_date) != datetime.date:
+		if end_date is None or not isinstance(end_date, datetime.date):
 			raise ValueError("Please provide a valid end date.")
 
 		if end_date <= start_date:
