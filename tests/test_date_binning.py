@@ -110,6 +110,10 @@ class TestBins:
 		with pytest.raises(ValueError):
 			Period().get_date_bins(date_dec_31_23, date_jan_2_23)
 
+	def test_iso_annual_error(self, date_jan_2_23, date_dec_31_23):
+		with pytest.raises(ValueError):
+			Period().get_iso_annual_start_dates(date_jan_2_23, date_dec_31_23, ("not_years", 1))
+
 	def test_no_custom_days_provided(self, date_jan_2_23, date_dec_31_23):
 		with pytest.raises(ValueError):
 			Period().get_date_bins(date_jan_2_23, date_dec_31_23, "Custom Days")
@@ -487,6 +491,17 @@ class TestConversions:
 	"""
 
 	# Bin Conversion Tests
+	def test_no_bins_returns_empty_list(self):
+		orig_bins = []
+		bins = Period().convert_dates(orig_bins)
+		assert len(bins) == 0 and isinstance(bins, list)
+
+	def test_different_length_data_error(self):
+		data = [1, 2, 3]
+		bins = ["a"]
+		with pytest.raises(ValueError):
+			Period().redistribute_data(data, bins)
+
 	def test_bin_iso_week_to_cal_month(self, date_jan_1_23, date_jun_30_23):
 		output = [
 			(datetime.date(2023, 1, 1), datetime.date(2023, 1, 31)),
@@ -563,6 +578,11 @@ class TestLabels:
 	"""
 	Tests for Period() label creation
 	"""
+
+	def test_no_bins_returns_empty_labels_list(self):
+		orig_bins = []
+		labels = Period().get_period_labels(orig_bins)
+		assert len(labels) == 0 and isinstance(labels, list)
 
 	def test_get_iso_week_and_year(self):
 		date = datetime.date(2020, 12, 28)

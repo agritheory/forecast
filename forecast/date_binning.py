@@ -360,11 +360,6 @@ class Period:
 		if not bins:
 			return []
 
-		if not periodicity and not date_format_string:
-			raise ValueError(
-				"Please provide either a periodicity or a custom date format string to generate the period labels."
-			)
-
 		if "iso" in periodicity.lower():
 			iso_data = [self.get_iso_week_and_year(p[0]) for p in bins]
 
