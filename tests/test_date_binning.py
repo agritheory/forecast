@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from date_binning import Period
+from forecast import Period
 
 
 @pytest.fixture
