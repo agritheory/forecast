@@ -74,7 +74,8 @@ class Forecast:
 			)
 		if len(self.data[-2]) != len(self.data[-1]):
 			warnings.warn(
-				"Warning: the two segments of provided data being used to calculate the applied percent change are of different lengths."
+				"Warning: the two segments of provided data being used to calculate the applied percent change are of different lengths.",
+				UserWarning,
 			)
 
 		n_minus_2_data = sum(self.data[-2][-periods:])
@@ -118,13 +119,13 @@ class Forecast:
 		the item that's `periods` back from it, then applies that trend to the most recent
 		provided data item onwards to generate the forecast.
 		"""
-		_data = self.__flat_data if periods > len(self.data[-1]) else self.data[-1]
+		_data = self.__flat_data if periods >= len(self.data[-1]) else self.data[-1]
 		if (periods - 1) > len(_data):
 			raise Exception(
 				"Cannot calculate the linear approximation slope for more periods than existing in data."
 			)
 		slope = (_data[-1] - _data[-periods - 1]) / Decimal(periods)
-		self.forecast = [_data[-1] + (slope * Decimal(i + 1)) for i in range(periods)]
+		self.forecast = [_data[-1] + (slope * Decimal(i + 1)) for i in range(len(self.data[-1]))]
 
 		return self
 
@@ -147,7 +148,7 @@ class Forecast:
 
 		return self
 
-	def second_degree_approximiation(self, periods: int) -> "Forecast":
+	def second_degree_approximation(self, periods: int) -> "Forecast":
 		"""
 		Fits a second-degree polynomial of the form y = a + bx + cx^2 using the given `periods` of
 		provided data as inputs. It applies the calculated coefficients (a, b, and c) to generate
@@ -278,23 +279,33 @@ class Forecast:
 
 	def exponential_smoothing_with_trend_and_seasonality(
 		self,
-		# season: int,
-		# periods: int,
 		alpha: Decimal,
 		beta: Decimal,
-		seasonality: list | tuple | None = None,
+		seasonality: list[Decimal] | tuple[Decimal] | None = None,
 	) -> "Forecast":
 		"""
-		TODO: docstring
+		This method calculates a trend, a seasonal index, and an exponentially smoothed average
+		from the provided data. It applies the trend to project the forecast, then adjusts that
+		for the seasonal index.
+
+		`alpha` and `beta` are smoothing parameters that should be type Decimal between 0 and 1.
+		`alpha` is the smoothing factor for the averaging of data, `beta` is the smoothing factor
+		for the trend component.
+
+		A list or tuple of `seasonality` factors may be optionally provided and must be the same
+		length as the most recent provided data. If it's not provided, then the method requires
+		two lists of provided historical data to make the calculation. Seasonality factors center
+		around 1 (in other words, the average of the provided seasonality factors must equal 1),
+		as they represent the contribution of a given period to the total.
 		"""
-		if len(self.data) < 2:
-			raise Exception(
-				"This method requires at least two segments of provided data to determine trend and seasonality."
-			)
-		if len(self.data[-2]) < len(self.data[-1]):
-			raise Exception(
-				"The more historical of the two segments of provided data must have the same or greater length than the more recent segment to calculate seasonality properly."
-			)
+		# if not seasonality and len(self.data) < 2:
+		# 	raise Exception(
+		# 		"This method requires at least two segments of provided data to determine seasonality."
+		# 	)
+		# if not seasonality and len(self.data[-2]) < len(self.data[-1]):
+		# 	raise Exception(
+		# 		"The more historical of the two segments of provided data must have the same or greater length than the more recent segment to calculate seasonality properly."
+		# 	)
 		if not isinstance(alpha, Decimal):
 			raise TypeError("alpha must be of type Decimal.")
 		if not (0 <= alpha <= 1):
@@ -309,18 +320,14 @@ class Forecast:
 			raise Exception(
 				"Provided seasonality values must be of same length as most recent provided data."
 			)
-		# if seasonality and sum(seasonality) != len(seasonality):  # TODO: add test if use this
-		# 	raise Exception("Provided seasonality values should sum to the total length, aka have an average value of 1.")
+		if seasonality and abs(Decimal(sum(seasonality)) - Decimal(len(seasonality))) > Decimal("1e-13"):
+			raise Exception(
+				"Provided seasonality values should sum to the total length, aka they must have an average value of 1."
+			)
 
-		# TODO: add ability to input own seasonality
-		# TODO: add function to calculate alpha and beta from data
-
-		# Calculate seasonality indices
-		total_units = sum(self.data[-2]) + sum(self.data[-1])
-		seasonality = [
-			((data_n_minus_1 + self.data[-2][i]) / total_units) * Decimal(len(self.data[-1]))
-			for i, data_n_minus_1 in enumerate(self.data[-1])
-		]
+		# Calculate seasonality factors if not provided
+		if not seasonality:
+			seasonality = calculate_seasonality_factors(self.data)
 
 		# Initialize first value for averages and trends
 		averages = [self.data[-1][0] / seasonality[0]]
@@ -518,3 +525,32 @@ def linregress(x, y, alternative="two-sided"):
 		intercept_stderr = dvzero
 
 	return slope, intercept, rvalue, pvalue, slope_stderr
+
+
+def calculate_seasonality_factors(
+	data: typing.Sequence[typing.Sequence[Decimal]],
+) -> list[Decimal]:
+	"""
+	Calculates seasonality from the provided `data` - a sequence of sequences of historical data
+	that are of type Decimal. The sequences in `data` must all be the same length (i.e. they all
+	have the same number of periods).
+
+	Returns a list of seasonality factors centering around 1 of same length as each sequence in
+	`data`.
+	"""
+	if not data or any(not d for d in data):
+		raise Exception("Sequences of provided data may not be empty.")
+
+	if any([not isinstance(n, Decimal) for d in data for n in d]):
+		raise TypeError("Values in provided data must be of type Decimal.")
+
+	num_periods = len(data[-1])
+	if any([len(d) != num_periods for d in data]):
+		raise Exception("Historical sequences in data must all have the same number of periods.")
+
+	total_units = Decimal(sum(sum(d) for d in data))
+	seasonality = [
+		(sum(hist_period[i] for hist_period in data) / total_units) * Decimal(num_periods)
+		for i in range(num_periods)
+	]
+	return seasonality
