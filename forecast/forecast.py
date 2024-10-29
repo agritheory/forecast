@@ -298,14 +298,6 @@ class Forecast:
 		around 1 (in other words, the average of the provided seasonality factors must equal 1),
 		as they represent the contribution of a given period to the total.
 		"""
-		# if not seasonality and len(self.data) < 2:
-		# 	raise Exception(
-		# 		"This method requires at least two segments of provided data to determine seasonality."
-		# 	)
-		# if not seasonality and len(self.data[-2]) < len(self.data[-1]):
-		# 	raise Exception(
-		# 		"The more historical of the two segments of provided data must have the same or greater length than the more recent segment to calculate seasonality properly."
-		# 	)
 		if not isinstance(alpha, Decimal):
 			raise TypeError("alpha must be of type Decimal.")
 		if not (0 <= alpha <= 1):
