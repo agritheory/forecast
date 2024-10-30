@@ -2,9 +2,9 @@
 
 **Table of Contents**
 
-- [Method 1: Percent Over Last Year](#percentoverlastyear)
-- [Method 2: Calculated Percent Over Last Year](#calculatedpercentoverlastyear)
-- [Method 3: Last Year to This Year](#lastyeartothisyear)
+- [Method 1: Percent Over Previous Period](#percentoverpreviousperiod)
+- [Method 2: Calculated Percent Over Previous Period](#calculatedpercentoverpreviousperiod)
+- [Method 3: Previous Period to Current Period](#previousperiodtocurrentperiod)
 - [Method 4: Moving Average](#movingaverage)
 - [Method 5: Linear Approximation](#linearapproximation)
 - [Method 6: Least Squares Regression](#leastsquaresregression)
@@ -24,6 +24,8 @@ from decimal import Decimal
 import numpy as np
 import pandas as pd
 from scipy import stats
+
+from forecast import Forecast, calculate_seasonality_factors
 
 import matplotlib.pyplot as plt
 %matplotlib inline
@@ -117,9 +119,19 @@ data.head()
 
 
 ```python
+# Create the data in Decimal format for Forecast - data should be sequenced
+# in the order it occurred historically, so most recent data is last
+data_forecast = [
+    [Decimal(n) for n in two_years_ago],
+    [Decimal(n) for n in one_year_ago],
+]
+```
+
+
+```python
 # Helper function to create simple plots of historical and forecasted data
 
-def make_plots(forecast_data, method_name):
+def make_plots(forecast_data, plot_title):
     """
     Helper function to display two plots:
         - Left plot shows historical actual data as two lines on lineplot
@@ -129,7 +141,7 @@ def make_plots(forecast_data, method_name):
         above the ylim, they won't be visible on the plot
     
     :param forecast_data: Assumes numeric, monthly data
-    :param method_name: string, used as plot title
+    :param plot_title: string, used as plot title
     :return: None, displays plot in notebook
     """
     plt.subplots(figsize=(15, 6));
@@ -147,14 +159,14 @@ def make_plots(forecast_data, method_name):
     # Create forecast plot
     plt.subplot(1, 2, 2);
     plt.plot(cols, forecast_data, 'go--', label='Next Year');
-    plt.title(f'Forecast - {method_name}');
+    plt.title(f'Forecast - {plot_title}');
     plt.ylabel('Sales');
     plt.ylim([110, 165]);
     plt.xlabel('Month');
     plt.legend(loc='lower right');
 ```
 
-## <a name="percentoverlastyear"></a>Method 1: Percent Over Last Year
+## <a name="percentoverpreviousperiod"></a>Method 1: Percent Over Previous Period
 
 This method multiplies each forecast period by a given, static growth/decline rate over the same period the year prior.
 
@@ -193,20 +205,45 @@ percent_over_last_year
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.percent_over_previous_period(percent_1).forecast
+```
+
+
+
+
+    [Decimal('140.8'),
+     Decimal('128.7'),
+     Decimal('126.5'),
+     Decimal('137.5'),
+     Decimal('134.2'),
+     Decimal('150.7'),
+     Decimal('154.0'),
+     Decimal('141.9'),
+     Decimal('144.1'),
+     Decimal('125.4'),
+     Decimal('130.9'),
+     Decimal('150.7')]
+
+
+
+
+```python
 make_plots(percent_over_last_year, 'Percent Over Last Year')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_6_0.png)
+![png](example_calcs_files/example_calcs_8_0.png)
     
 
 
-## <a name="calculatedpercentoverlastyear"></a> Method 2: Calculated Percent Over Last Year
+## <a name="calculatedpercentoverpreviousperiod"></a> Method 2: Calculated Percent Over Previous Period
 
-This method calculates a period-over-period growth rate from a given slice of historical data. To generate the forecast, that rate is then applied to each period in the prior years historical data.
+This method calculates a period-over-period growth rate from a given slice of historical data. To generate the forecast, that rate is then applied to each period in the prior year's historical data.
 
-The example below uses Q4 sales from the prior two years of historical data to calculate the growth rate. It then applies that rate to each months sales figures from the last year to generate the monthly forecast data.
+The example below uses a period of 4, or the last four months of sales from each of the prior two years of historical data to calculate the growth rate. In this case, the sales in that period from two years ago were higher than the sales from the previous year, so the growth rate is negative. It then applies that rate to each month's sales figures from the last year to generate the monthly forecast data.
 
 
 ```python
@@ -246,23 +283,48 @@ calculated_percent_over_last_year
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.calculated_percent_over_previous_period(periods_2).forecast
+```
+
+
+
+
+    [Decimal('125.0058479532163742690058479'),
+     Decimal('114.2631578947368421052631579'),
+     Decimal('112.3099415204678362573099415'),
+     Decimal('122.0760233918128654970760234'),
+     Decimal('119.1461988304093567251461988'),
+     Decimal('133.7953216374269005847953216'),
+     Decimal('136.7251461988304093567251462'),
+     Decimal('125.9824561403508771929824561'),
+     Decimal('127.9356725146198830409356725'),
+     Decimal('111.3333333333333333333333333'),
+     Decimal('116.2163742690058479532163743'),
+     Decimal('133.7953216374269005847953216')]
+
+
+
+
+```python
 make_plots(calculated_percent_over_last_year, 'Calculated Percent Over Last Year')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_9_0.png)
+![png](example_calcs_files/example_calcs_12_0.png)
     
 
 
-## <a name="lastyeartothisyear"></a>Method 3: Last Year to This Year
+## <a name="previousperiodtocurrentperiod"></a>Method 3: Previous Period to Current Period
 
 This method uses the same period data from the last year as the forecast for next year. Another way to look at it is that the forecast applies a 'percent over last year' growth rate of 0%.
 
 
 ```python
-last_year_to_this_year = [Decimal(n) for n in one_year_ago]
-last_year_to_this_year
+previous_period_to_current_period = [Decimal(n) for n in one_year_ago]
+previous_period_to_current_period
 ```
 
 
@@ -285,12 +347,37 @@ last_year_to_this_year
 
 
 ```python
-make_plots(last_year_to_this_year, 'Last Year to This Year')
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.previous_period_to_current_period().forecast
+```
+
+
+
+
+    [Decimal('128'),
+     Decimal('117'),
+     Decimal('115'),
+     Decimal('125'),
+     Decimal('122'),
+     Decimal('137'),
+     Decimal('140'),
+     Decimal('129'),
+     Decimal('131'),
+     Decimal('114'),
+     Decimal('119'),
+     Decimal('137')]
+
+
+
+
+```python
+make_plots(previous_period_to_current_period, 'Previous Period to Current Period')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_12_0.png)
+![png](example_calcs_files/example_calcs_16_0.png)
     
 
 
@@ -305,7 +392,6 @@ The example below averages the prior 4 months of sales data to generate the curr
 periods_4 = 4
 moving_average = one_year_ago[-periods_4:]
 
-# TODO: look into window function possibilities for arrays
 # Generate forecast
 for i in range(12):
     moving_average.append(Decimal(np.mean(moving_average[-periods_4:])))
@@ -336,12 +422,37 @@ moving_average
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.moving_average(periods_4).forecast
+```
+
+
+
+
+    [Decimal('125.25'),
+     Decimal('123.8125'),
+     Decimal('126.265625'),
+     Decimal('128.08203125'),
+     Decimal('125.8525390625'),
+     Decimal('126.003173828125'),
+     Decimal('126.55084228515625'),
+     Decimal('126.6221466064453125'),
+     Decimal('126.257175445556640625'),
+     Decimal('126.35833454132080078125'),
+     Decimal('126.4471247196197509765625'),
+     Decimal('126.421195328235626220703125')]
+
+
+
+
+```python
 make_plots(moving_average, "Moving Average")
 ```
 
 
     
-![png](example_calcs_files/example_calcs_15_0.png)
+![png](example_calcs_files/example_calcs_20_0.png)
     
 
 
@@ -387,18 +498,45 @@ linear_approximation
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.linear_approximation(periods_5).forecast
+```
+
+
+
+
+    [Decimal('139'),
+     Decimal('141'),
+     Decimal('143'),
+     Decimal('145'),
+     Decimal('147'),
+     Decimal('149'),
+     Decimal('151'),
+     Decimal('153'),
+     Decimal('155'),
+     Decimal('157'),
+     Decimal('159'),
+     Decimal('161')]
+
+
+
+
+```python
 make_plots(linear_approximation, 'Linear Approximation')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_18_0.png)
+![png](example_calcs_files/example_calcs_24_0.png)
     
 
 
 ## <a name="leastsquaresregression"></a>Method 6: Least Squares Regression
 
 This method finds a line of best fit via the Least Squares Method based on the given period of historical data. It then applies the resulting slope ($m$) and intercept ($b$) to generate the forecasted values with the formula $y = mx + b$.
+
+Note the differences between the calculated values and the values the Forecast class returns for the forecast are due to float-to-Decimal conversions made at the end of the calculations below. The Forecast class uses Decimal objects throughout the calculations.
 
 
 ```python
@@ -413,7 +551,7 @@ slope_6, intercept_6, r_value, p_value, std_err = stats.linregress(x_6, y_6)
 print(f'Slope: {slope_6:.2f}, Intercept: {intercept_6:.2f}')  # 2.30, 119.50
 
 # Generate forecast
-least_squares_regression = [Decimal(i * slope_6 + intercept_6) for i in range(periods_6 + 1, periods_6 + 13)]
+least_squares_regression = [Decimal(i * slope_6 + intercept_6) for i in range(periods_6 + 1, periods_6 + 1 + len(one_year_ago))]
 least_squares_regression
 ```
 
@@ -440,12 +578,37 @@ least_squares_regression
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.least_squares_regression(periods_6).forecast
+```
+
+
+
+
+    [Decimal('131.00'),
+     Decimal('133.30'),
+     Decimal('135.60'),
+     Decimal('137.90'),
+     Decimal('140.20'),
+     Decimal('142.50'),
+     Decimal('144.80'),
+     Decimal('147.10'),
+     Decimal('149.40'),
+     Decimal('151.70'),
+     Decimal('154.00'),
+     Decimal('156.30')]
+
+
+
+
+```python
 make_plots(least_squares_regression, 'Least Squares Regression')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_21_0.png)
+![png](example_calcs_files/example_calcs_28_0.png)
     
 
 
@@ -454,6 +617,8 @@ make_plots(least_squares_regression, 'Least Squares Regression')
 This method uses a set number of historic periods as input to fit a second-degree polynomial to the trend. The underlying math uses the historic data to fit a curve that solves the equation $y = a + bx + cx^2$.
 
 The example below slices a 6-month period of recent monthly historic sales to establish the polynomial trend.
+
+Note the differences between the calculated values and the values the Forecast class returns for the forecast are due to float-to-Decimal conversions made at the end of the calculations below. The Forecast class uses Decimal objects throughout the calculations.
 
 
 ```python
@@ -467,7 +632,7 @@ y_7 = one_year_ago[-periods_7:]
 c, b, a = np.polyfit(x_7, y_7, deg=2)
 
 # Generate forecast
-per = range(periods_7 + 1, periods_7 + 13)
+per = range(periods_7 + 1, periods_7 + 1 +len(one_year_ago))
 second_degree_approximation = [Decimal(a + b*x + c*x**2) for x in per]
 second_degree_approximation
 ```
@@ -487,6 +652,31 @@ second_degree_approximation
      Decimal('536.0714285714301468033227138221263885498046875'),
      Decimal('607.1928571428588838898576796054840087890625'),
      Decimal('683.9214285714307379748788662254810333251953125')]
+
+
+
+
+```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.second_degree_approximation(periods_7).forecast
+```
+
+
+
+
+    [Decimal('148.3000000000000000000000006'),
+     Decimal('168.9571428571428571428571439'),
+     Decimal('195.2214285714285714285714302'),
+     Decimal('227.0928571428571428571428595'),
+     Decimal('264.5714285714285714285714318'),
+     Decimal('307.6571428571428571428571470'),
+     Decimal('356.3500000000000000000000053'),
+     Decimal('410.6500000000000000000000065'),
+     Decimal('470.5571428571428571428571508'),
+     Decimal('536.0714285714285714285714379'),
+     Decimal('607.1928571428571428571428681'),
+     Decimal('683.9214285714285714285714413')]
 
 
 
@@ -513,13 +703,13 @@ plt.legend();
 
 
     
-![png](example_calcs_files/example_calcs_24_0.png)
+![png](example_calcs_files/example_calcs_32_0.png)
     
 
 
 ## <a name="flexiblemethod"></a>Method 8: Flexible Method
 
-This method is similar to Method 1 (percent over last year) as it is also applying a static growth rate to historic sales. However, instead of using the same period historically to generate the forecasted period (January 2019 to forecast January 2020), the user specifies a given number of periods to go back as the starting point to grow the forecast from.
+This method is similar to Method 1 (percent over previous period) as it is also applying a static growth rate to historic sales. However, instead of using the same period historically to generate the forecasted period (January of last year to forecast the upcoming January), the user specifies a given number of periods to go back as the starting point from which to grow the forecast.
 
 In the example below, the period is 4, so the first forecast period (January) is generated by applying the 10% growth rate to the September sales figure (which is 4 months prior). The second forecast period applies the 10% growth rate to October, and so forth, to create the entire forecast period.
 
@@ -560,12 +750,37 @@ flexible_method
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.flexible_method(percent_8, periods_8).forecast
+```
+
+
+
+
+    [Decimal('144.1'),
+     Decimal('125.4'),
+     Decimal('130.9'),
+     Decimal('150.7'),
+     Decimal('158.51'),
+     Decimal('137.94'),
+     Decimal('143.99'),
+     Decimal('165.77'),
+     Decimal('174.361'),
+     Decimal('151.734'),
+     Decimal('158.389'),
+     Decimal('182.347')]
+
+
+
+
+```python
 make_plots(flexible_method, 'Flexible Method')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_27_0.png)
+![png](example_calcs_files/example_calcs_36_0.png)
     
 
 
@@ -575,16 +790,19 @@ Similar to the moving average method, this method calculates a weighted average 
 
 The example below assumes a 4-period (month) window to calculate the moving average. The weights assign a 10% importance to the most distant period within that 4-month window, then 15% to the third-most recent period, then 25%, and finally 50% weight to the most recent period.
 
+Note the differences between the calculated values and the values the Forecast class returns for the forecast are due to float-to-Decimal conversions made at the end of the calculations below. The Forecast class uses Decimal objects throughout the calculations.
+
 
 ```python
 periods_9 = 4
-weights_9 = np.array([0.10, 0.15, 0.25, 0.50])
+weights = [0.10, 0.15, 0.25, 0.50]
+weights_9 = np.array(weights)
 assert sum(weights_9) == 1
 
 weighted_moving_average = one_year_ago[-periods_9:]
 
 # Generate forecast
-for i in range(12):
+for i in range(len(one_year_ago)):
     weighted_moving_average.append(sum(weights_9 * np.array(weighted_moving_average[i:i + periods_9])))
 
 # Remove the historical data needed for the first several forecast period calcs
@@ -614,12 +832,37 @@ weighted_moving_average
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.weighted_moving_average(periods_9, [Decimal(w) for w in weights]).forecast
+```
+
+
+
+
+    [Decimal('128.4500000000000000943689571'),
+     Decimal('127.7250000000000000194289029'),
+     Decimal('128.4249999999999999333866185'),
+     Decimal('129.1112500000000000331679128'),
+     Decimal('128.6656250000000000163064006'),
+     Decimal('128.6468750000000000045102810'),
+     Decimal('128.6990312500000000008361367'),
+     Decimal('128.7222031250000000097821056'),
+     Decimal('128.6994531250000000075113526'),
+     Decimal('128.6998195312500000064881260'),
+     Decimal('128.7030066406250000065442009'),
+     Decimal('128.7035964843750000071253333')]
+
+
+
+
+```python
 make_plots(weighted_moving_average, 'Weighted Moving Average')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_30_0.png)
+![png](example_calcs_files/example_calcs_40_0.png)
     
 
 
@@ -637,6 +880,8 @@ The example below uses a period of $n=4$, therefore $W = \frac{(4^2 + 4)}{2} = \
 | December  | 4/10      |
 | **Total** | **10/10** |
 
+Note the differences between the calculated values and the values the Forecast class returns for the forecast are due to float-to-Decimal conversions made at the end of the calculations below. The Forecast class uses Decimal objects throughout the calculations.
+
 
 ```python
 periods_10 = 4
@@ -649,7 +894,7 @@ assert sum(weights_10) == 1
 linear_smoothing = one_year_ago[-periods_10:]
 
 # Generate forecast
-for i in range(12):
+for i in range(len(one_year_ago)):
     linear_smoothing.append(sum(weights_10 * np.array(linear_smoothing[i:i + periods_10])))
 
 # Remove the historical data needed for the first several forecast period calcs
@@ -679,12 +924,37 @@ linear_smoothing
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.linear_smoothing(periods_10).forecast
+```
+
+
+
+
+    [Decimal('126.4'),
+     Decimal('126.86'),
+     Decimal('127.964'),
+     Decimal('128.2236'),
+     Decimal('127.69064'),
+     Decimal('127.822136'),
+     Decimal('127.8771664'),
+     Decimal('127.85799536'),
+     Decimal('127.839839264'),
+     Decimal('127.8509811936'),
+     Decimal('127.85165996864'),
+     Decimal('127.849725734336')]
+
+
+
+
+```python
 make_plots(linear_smoothing, 'Linear Smoothing')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_33_0.png)
+![png](example_calcs_files/example_calcs_44_0.png)
     
 
 
@@ -714,6 +984,7 @@ $S_{\text{Dec}} = \alpha (D_{\text{Nov}}) + (1 - \alpha) (S_{\text{Nov}})$
 $F_1 = S_{\text{Dec}}$  
 $F_2 = S_{\text{Dec}}$
 
+Note the differences between the calculated values and the values the Forecast class returns for the forecast are due to float-to-Decimal conversions made at the end of the calculations below. The Forecast class uses Decimal objects throughout the calculations.
 
 
 ```python
@@ -730,7 +1001,7 @@ for i, sales in enumerate(tmp):
 print(f'Smoothed historical data: {smoothed_11}')
 
 # Generate forecast
-exponential_smoothing = [Decimal(smoothed_11[-1])] * 12
+exponential_smoothing = [Decimal(smoothed_11[-1])] * len(one_year_ago)
 
 exponential_smoothing
 ```
@@ -758,12 +1029,37 @@ exponential_smoothing
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.exponential_smoothing(periods_11, Decimal(alpha_11)).forecast
+```
+
+
+
+
+    [Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777'),
+     Decimal('127.7809999999999999998889777')]
+
+
+
+
+```python
 make_plots(exponential_smoothing, 'Exponential Smoothing')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_36_0.png)
+![png](example_calcs_files/example_calcs_48_0.png)
     
 
 
@@ -791,31 +1087,34 @@ $F_{t+m} = (A_t + T_t * m) S_{t-L+m}$
 
 Once smoothing is applied to the historical data, the forecast is generated by extrapolating the latest value to generate the forecast data.
 
+Seasonality factors may be supplied to the Forecast method, otherwise the method calculates them from the provided historical data.
+
+Note the differences between the calculated values and the values the Forecast class returns for the forecast are due to float-to-Decimal conversions made at the end of the calculations below. The Forecast class uses Decimal objects throughout the calculations.
+
 
 ```python
-periods_12 = 4
-L_12 = 12
+L_12 = len(one_year_ago)
 alpha_12 = 0.3
 beta_12 = 0.4
 
 # Calculate seasonality indices
 all_sales = sum(one_year_ago) + sum(two_years_ago)
-seasonality_12 = [(sales_1yrago + two_years_ago[i]) / all_sales * L_12
-                  for i, sales_1yrago in enumerate(one_year_ago)]
-# print(f'Seasonality Indices: {seasonality_12:.4f}')
+seasonality_12 = [(one_year_ago[i] + two_years_ago[i]) / all_sales * L_12
+                  for i in range(L_12)]
+# print(f'Seasonality Indices: {seasonality_12}')
 
 # Initialize A_1 and T_1
 averages_12 = [one_year_ago[0] / seasonality_12[0]]  # Jan sales / Jan seasonality index
 trends_12 =[0]
 
 # Calculate remaining smoothed averages A and trend factors T
-for i in range(1, 12):
+for i in range(1, len(one_year_ago)):
     A_t = alpha_12 * (one_year_ago[i] / seasonality_12[i]) + (1 - alpha_12) * (averages_12[i-1] + trends_12[i-1])
     T_t = beta_12 * (A_t - averages_12[i-1]) + (1 - beta_12) * (trends_12[i-1])
     averages_12.append(A_t)
     trends_12.append(T_t)
 
-for i in range(12):
+for i in range(len(one_year_ago)):
     print(f'{cols[i]}')
     print(f'S index: {seasonality_12[i]:.4f}')
     print(f'A_{i+1}: {averages_12[i]:.2f}')
@@ -918,11 +1217,36 @@ exponential_smoothing_trend_seasonality
 
 
 ```python
+# Example using the Forecast class
+fc = Forecast(data=data_forecast)
+fc.exponential_smoothing_with_trend_and_seasonality(Decimal(alpha_12), Decimal(beta_12)).forecast
+```
+
+
+
+
+    [Decimal('124.1599617698342354718635886'),
+     Decimal('117.3291585691920329070553376'),
+     Decimal('112.0081947395869399156164378'),
+     Decimal('127.0995557078069141450863873'),
+     Decimal('117.9089654718210114291232736'),
+     Decimal('128.5215505878383372591304437'),
+     Decimal('134.7324129145143440654695101'),
+     Decimal('122.7420270670585035922305486'),
+     Decimal('118.4533071724319267749694413'),
+     Decimal('112.2993097654898033126267879'),
+     Decimal('121.7650110237349277995909167'),
+     Decimal('126.9210772994730049559098463')]
+
+
+
+
+```python
 make_plots(exponential_smoothing_trend_seasonality, 'Exponential Smoothing with Trend and Seasonality')
 ```
 
 
     
-![png](example_calcs_files/example_calcs_40_0.png)
+![png](example_calcs_files/example_calcs_53_0.png)
     
 
