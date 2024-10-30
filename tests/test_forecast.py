@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from forecast import Forecast
+from forecast import Forecast, calculate_seasonality_factors
 
 
 @pytest.fixture
@@ -178,27 +178,27 @@ def test_moving_average(example_data):
 
 
 def test_linear_approximation(example_data):
-	linear_approximation_ouput = [
-		Decimal("133.8333333333333333703407675"),
-		Decimal("134.6666666666666667406815350"),
-		Decimal("135.5000000000000001110223025"),
-		Decimal("136.3333333333333334813630700"),
-		Decimal("137.1666666666666668517038374"),
-		Decimal("138.0000000000000002220446049"),
-		Decimal("138.8333333333333335923853724"),
-		Decimal("139.6666666666666669627261399"),
-		Decimal("140.5000000000000003330669074"),
-		Decimal("141.3333333333333337034076749"),
-		Decimal("142.1666666666666670737484424"),
-		Decimal("143.0000000000000004440892098"),
+	linear_approximation_output = [
+		Decimal("138"),
+		Decimal("143"),
+		Decimal("148"),
+		Decimal("153"),
+		Decimal("158"),
+		Decimal("163"),
+		Decimal("168"),
+		Decimal("173"),
+		Decimal("178"),
+		Decimal("183"),
+		Decimal("188"),
+		Decimal("193"),
 	]
-	fc = example_data.linear_approximation(12)
+	fc = example_data.linear_approximation(3)
 	for index, period in enumerate(fc.forecast):
-		assert abs(period - linear_approximation_ouput[index]) < Decimal("1e-15")
+		assert abs(period - linear_approximation_output[index]) < Decimal("1e-15")
 
 
 def test_least_squares_regression(example_data):
-	least_squares_regression_ouput = [
+	least_squares_regression_output = [
 		Decimal("132.8787878787878753428230993449687957763671875"),
 		Decimal("133.6550116550116626967792399227619171142578125"),
 		Decimal("134.431235431235421629025950096547603607177734375"),
@@ -214,11 +214,11 @@ def test_least_squares_regression(example_data):
 	]
 	fc = example_data.least_squares_regression(12)
 	for index, period in enumerate(fc.forecast):
-		assert abs(period - least_squares_regression_ouput[index]) < Decimal("1e-13")
+		assert abs(period - least_squares_regression_output[index]) < Decimal("1e-13")
 
 
-def test_second_degree_approximiation(example_data):
-	second_degree_approximiation_ouput = [
+def test_second_degree_approximation(example_data):
+	second_degree_approximation_output = [
 		Decimal("132.181818181818385937731363810598850250244140625"),
 		Decimal("132.63636363636391024556360207498073577880859375"),
 		Decimal("133.044955044955344192203483544290065765380859375"),
@@ -232,9 +232,25 @@ def test_second_degree_approximiation(example_data):
 		Decimal("134.65934065934152386034838855266571044921875"),
 		Decimal("134.654345654346656147026806138455867767333984375"),
 	]
-	fc = example_data.second_degree_approximiation(12)
+	fc = example_data.second_degree_approximation(12)
 	for index, period in enumerate(fc.forecast):
-		assert abs(period - second_degree_approximiation_ouput[index]) < Decimal("1e-11")
+		assert abs(period - second_degree_approximation_output[index]) < Decimal("1e-11")
+
+	second_degree_approximation_output_2 = [
+		Decimal("294.0000000000000000000000047"),
+		Decimal("172.0000000000000000000000116"),
+		Decimal("4.0000000000000000000000216"),
+	]
+	input_data = [
+		[
+			Decimal("384"),
+			Decimal("400"),
+			Decimal("370"),
+		]
+	]
+	fc = Forecast(data=input_data).second_degree_approximation(3)
+	for index, period in enumerate(fc.forecast):
+		assert abs(period - second_degree_approximation_output_2[index]) < Decimal("1e-11")
 
 
 def test_flexible_method(example_data):
@@ -333,23 +349,203 @@ def test_exponential_smoothing(example_data):
 
 def test_exponential_smoothing_with_trend_and_seasonality(example_data):
 	exponential_smoothing__with_trend_and_seasonality_output = [
-		Decimal("136.5326570985329249670502048"),
-		Decimal("127.9506137514868969066586413"),
-		Decimal("121.3897907066283345179305391"),
-		Decimal("116.3450257469586410531578263"),
-		Decimal("132.5471313397843412718543269"),
-		Decimal("123.4547828680023790648772415"),
-		Decimal("135.1071713329402470308635860"),
-		Decimal("142.2074997897988640658716488"),
-		Decimal("130.0763493675806439238778370"),
-		Decimal("126.0415088379730473332492457"),
-		Decimal("119.9807622457950906651202726"),
-		Decimal("130.6267120292483950413402586"),
+		Decimal("128.8400382301657645281364115"),
+		Decimal("122.6708414308079670929446625"),
+		Decimal("117.9918052604130600843835623"),
+		Decimal("134.9004442921930858549136128"),
+		Decimal("126.0910345281789885708767265"),
+		Decimal("138.4784494121616627408695564"),
+		Decimal("146.2675870854856559345304901"),
+		Decimal("134.2579729329414964077694516"),
+		Decimal("130.5466928275680732250305588"),
+		Decimal("124.7006902345101966873732121"),
+		Decimal("136.2349889762650722004090835"),
+		Decimal("143.0789227005269950440901538"),
 	]
-	fc = example_data.exponential_smoothing_with_trend_and_seasonality(
-		12, 12, Decimal(0.3), Decimal(0.4)
-	)
+	fc = example_data.exponential_smoothing_with_trend_and_seasonality(Decimal(0.3), Decimal(0.4))
 	for index, period in enumerate(fc.forecast):
 		assert abs(period - exponential_smoothing__with_trend_and_seasonality_output[index]) < Decimal(
 			"1e-13"
 		)
+
+
+def test_seasonality(example_data):
+	# Test correct output
+	seasonality_output = [
+		Decimal("0.9960629921259842519685039370"),
+		Decimal("0.9448818897637795275590551181"),
+		Decimal("0.9055118110236220472440944882"),
+		Decimal("1.031496062992125984251968504"),
+		Decimal("0.9606299212598425196850393701"),
+		Decimal("1.051181102362204724409448819"),
+		Decimal("1.106299212598425196850393701"),
+		Decimal("1.011811023622047244094488189"),
+		Decimal("0.9803149606299212598425196851"),
+		Decimal("0.9330708661417322834645669291"),
+		Decimal("1.015748031496062992125984252"),
+		Decimal("1.062992125984251968503937008"),
+	]
+	data = example_data.data
+	seasonality = calculate_seasonality_factors(data)
+	for index, s in enumerate(seasonality):
+		assert abs(s - seasonality_output[index]) < Decimal("1e-13")
+
+
+# Error testing
+def test_non_decimal_data_error():
+	with pytest.raises(TypeError):
+		fc = Forecast(data=[[Decimal(1), Decimal(3), 5, Decimal(0)]])
+
+
+def test_percent_over_previous_period_errors(example_data):
+	# Test non-Decimal percent
+	with pytest.raises(TypeError):
+		fc = example_data.percent_over_previous_period(percent=10.0)
+
+
+def test_calculated_percent_over_previous_period_errors(example_data):
+	# Test only one period of historical data given (needs 2+)
+	with pytest.raises(Exception):
+		fc = Forecast(data=[[Decimal(2), Decimal(3)]]).calculated_percent_over_previous_period()
+
+	# Test too many periods
+	with pytest.raises(Exception):
+		fc = example_data.calculated_percent_over_previous_period(periods=100)
+
+	# Test warning if user gives different length provided data
+	with pytest.warns(UserWarning):
+		d = [[Decimal(1), Decimal(2), Decimal(3)], [Decimal(4), Decimal(5)]]
+		fc = Forecast(data=d).calculated_percent_over_previous_period(periods=2)
+
+
+def test_moving_average_errors(example_data):
+	# Test too many periods
+	with pytest.raises(Exception):
+		fc = example_data.moving_average(periods=100)
+
+
+def test_linear_approximation_errors(example_data):
+	# Test too many periods
+	with pytest.raises(Exception):
+		fc = example_data.linear_approximation(periods=100)
+
+
+def test_least_squares_regression_errors(example_data):
+	# Test too many periods
+	with pytest.raises(Exception):
+		fc = example_data.least_squares_regression(periods=100)
+
+
+def test_second_degree_approximation_errors(example_data):
+	# Test too many periods
+	with pytest.raises(Exception):
+		fc = example_data.second_degree_approximation(periods=100)
+
+
+def test_flexible_method_errors(example_data):
+	# Test non-Decimal percent
+	with pytest.raises(TypeError):
+		fc = example_data.flexible_method(percent=10.0, periods=2)
+
+	# Test too many periods
+	with pytest.raises(Exception):
+		fc = example_data.flexible_method(percent=Decimal(10.0), periods=100)
+
+
+def test_weighted_moving_average_errors(example_data):
+	# Test non-Decimal weights
+	with pytest.raises(TypeError):
+		fc = example_data.weighted_moving_average(periods=2, weights=[0.5, 0.5])
+
+	# Test too many periods
+	with pytest.raises(Exception):
+		fc = example_data.weighted_moving_average(periods=100, weights=[Decimal(0.5), Decimal(0.5)])
+
+	# Weights don't add to 1
+	with pytest.raises(Exception):
+		weights = [Decimal(0.3), Decimal(0.8)]
+		fc = example_data.weighted_moving_average(periods=len(weights), weights=weights)
+
+	# Number of periods doesn't match the number of weights
+	with pytest.raises(Exception):
+		weights = [Decimal(0.3), Decimal(0.7)]
+		fc = example_data.weighted_moving_average(periods=3, weights=weights)
+
+
+def test_linear_smoothing_errors(example_data):
+	# Test too many periods
+	with pytest.raises(Exception):
+		fc = example_data.linear_smoothing(periods=100)
+
+
+def test_exponential_smoothing_errors(example_data):
+	# Test non-Decimal alpha value
+	with pytest.raises(TypeError):
+		fc = example_data.exponential_smoothing(periods=4, alpha=0.3)
+
+	# Test invalid alpha value
+	with pytest.raises(Exception):
+		fc = example_data.exponential_smoothing(periods=4, alpha=Decimal(1.2))
+
+	# Test too many periods
+	with pytest.raises(Exception):
+		fc = example_data.exponential_smoothing(periods=100, alpha=Decimal(0.3))
+
+
+def test_exponential_smoothing_with_trend_and_seasonality_errors(example_data):
+	alpha = Decimal(0.3)
+	beta = Decimal(0.4)
+	invalid_value = Decimal(1.2)
+
+	# Test non-Decimal alpha value
+	with pytest.raises(TypeError):
+		fc = example_data.exponential_smoothing_with_trend_and_seasonality(alpha=0.3, beta=beta)
+
+	# Test invalid alpha value
+	with pytest.raises(Exception):
+		fc = example_data.exponential_smoothing_with_trend_and_seasonality(
+			alpha=invalid_value, beta=beta
+		)
+
+	# Test non-Decimal beta value
+	with pytest.raises(TypeError):
+		fc = example_data.exponential_smoothing_with_trend_and_seasonality(alpha, 0.4)
+
+	# Test invalid beta value
+	with pytest.raises(Exception):
+		fc = example_data.exponential_smoothing_with_trend_and_seasonality(
+			alpha=alpha, beta=invalid_value
+		)
+
+	# Test non-Decimal seasonality value
+	with pytest.raises(TypeError):
+		s = [0.995, 0.982, 1.005, 1.028]
+		fc = example_data.exponential_smoothing_with_trend_and_seasonality(alpha, beta, seasonality=s)
+
+	# Test provided seasonality data different length than recent provided data
+	with pytest.raises(Exception):
+		s = [Decimal(1), Decimal(0.995), Decimal(1.005)]
+		fc = example_data.exponential_smoothing_with_trend_and_seasonality(alpha, beta, seasonality=s)
+
+	# Test provided seasonality factors aren't centered around (average) 1
+	with pytest.raises(Exception):
+		s = [Decimal(1), Decimal(2), Decimal(1)]
+		fc = example_data.exponential_smoothing_with_trend_and_seasonality(alpha, beta, seasonality=s)
+
+
+def test_seasonality_errors():
+	# Test no data provided
+	with pytest.raises(Exception):
+		s = calculate_seasonality_factors([[], [Decimal(1)]])
+
+	# Test non-Decimal data
+	with pytest.raises(TypeError):
+		s = calculate_seasonality_factors([[1, Decimal(2)]])
+
+	# Test data of unequal lengths (different number of periods)
+	with pytest.raises(Exception):
+		d = [
+			[Decimal(1), Decimal(2), Decimal(3)],
+			[Decimal(0), Decimal(2)],
+		]
+		s = calculate_seasonality_factors(d)
