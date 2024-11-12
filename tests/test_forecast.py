@@ -592,6 +592,11 @@ def test_seasonality(example_data):
 
 
 # Error testing
+def test_no_data_provided_error():
+	with pytest.raises(Exception):
+		fc = Forecast().previous_period_to_current_period()
+
+
 def test_non_decimal_data_error():
 	with pytest.raises(TypeError):
 		fc = Forecast(data=[[Decimal(1), Decimal(3), 5, Decimal(0)]])
