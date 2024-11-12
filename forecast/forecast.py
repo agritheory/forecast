@@ -618,7 +618,7 @@ def calculate_seasonality_factors(
 		raise TypeError("Values in provided data must be of type Decimal.")
 
 	num_periods = min(len(d) for d in data)
-	total_units = Decimal(sum(sum(d) for d in data))
+	total_units = Decimal(sum(sum(d[:num_periods]) for d in data))
 	seasonality = [
 		(sum(hist_period[i] for hist_period in data) / total_units) * Decimal(num_periods)
 		for i in range(num_periods)

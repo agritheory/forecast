@@ -581,6 +581,15 @@ def test_seasonality(example_data):
 	for index, s in enumerate(seasonality):
 		assert abs(s - seasonality_output[index]) < Decimal("1e-13")
 
+	# Test if data has sequences of unequal length, seasonality is same length as shorter of two
+	data = [
+		[Decimal("95"), Decimal("105"), Decimal("90")],
+		[Decimal("90"), Decimal("110")],
+	]
+	seasonality = calculate_seasonality_factors(data)
+	assert len(seasonality) == 2
+	assert abs(sum(seasonality) - 2) < Decimal("1e-13")
+
 
 # Error testing
 def test_non_decimal_data_error():
