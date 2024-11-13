@@ -5,6 +5,7 @@
 import typing
 import warnings
 from decimal import Decimal
+from itertools import cycle
 
 
 class Forecast:
@@ -40,27 +41,42 @@ class Forecast:
 
 		return self
 
-	def percent_over_previous_period(self, percent: Decimal) -> "Forecast":
+	def percent_over_previous_period(self, percent: Decimal, n: int | None = None) -> "Forecast":
 		"""
 		Applies the given percent to the items in the most recent provided data to generate the
 		forecasted data.
+
+		:param percent: rate applied to the previous period's data to create the forecasted values
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		if not isinstance(percent, Decimal):
 			raise TypeError("Percent must be of type Decimal.")
 
+		n = n or len(self.data[-1])
+		previous_period = cycle(self.data[-1])
 		self.forecast = [
-			period * (self.__dvone + (percent / self.__dvhundred)) if percent else self.__dvzero
-			for period in self.data[-1]
+			next(previous_period) * (self.__dvone + (percent / self.__dvhundred)) for _ in range(n)
 		]
 
 		return self
 
-	def calculated_percent_over_previous_period(self, periods: int = 0) -> "Forecast":
+	def calculated_percent_over_previous_period(
+		self, periods: int = 0, n: int | None = None
+	) -> "Forecast":
 		"""
 		Calculates the percent change of the most recent provided data over the second most recent
-		provided data and applies that rate to generate the forecast. By default, it uses all
-		periods in the data lists for the calculation, but if `periods` is provided, then it only
-		uses that many items from the end of each data list to calculate the growth rate.
+		provided data and applies that rate to the values starting with the most recent provided
+		data to generate the forecast. By default, it uses all periods in the data lists for the
+		calculation, but if `periods` is provided, then it only uses that many items from the end
+		of each data list to calculate the growth rate. If `n` is given and requires more periods
+		to forecast than are in the recent data, it will cycle over the values of the most recent
+		provided data as needed.
+
+		:param periods: the number of periods to use to calculate the percent change. If 0, uses
+		all periods in provided data
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		if len(self.data) < 2:
 			raise Exception(
@@ -81,30 +97,46 @@ class Forecast:
 		n_minus_2_data = sum(self.data[-2][-periods:])
 		n_minus_1_data = sum(self.data[-1][-periods:])
 		percent = ((n_minus_1_data / n_minus_2_data) - self.__dvone) * self.__dvhundred
-		self.forecast = [n * (self.__dvone + (percent / self.__dvhundred)) for n in self.data[-1]]
+
+		n = n or len(self.data[-1])
+		previous_period = cycle(self.data[-1])
+		self.forecast = [
+			next(previous_period) * (self.__dvone + (percent / self.__dvhundred)) for _ in range(n)
+		]
 
 		return self
 
-	def previous_period_to_current_period(self) -> "Forecast":
+	def previous_period_to_current_period(self, n: int | None = None) -> "Forecast":
 		"""
 		Generates the forecasted data by setting it equal to the most recent provided data with
-		no changes.
+		no changes. If `n` is given and requires more periods to forecast than are in the recent
+		data, it will cycle over the values of the most recent provided data as needed.
+
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
-		self.forecast = self.data[-1]
+		n = n or len(self.data[-1])
+		previous_period = cycle(self.data[-1])
+		self.forecast = [next(previous_period) for _ in range(n)]
 
 		return self
 
-	def moving_average(self, periods: int) -> "Forecast":
+	def moving_average(self, periods: int, n: int | None = None) -> "Forecast":
 		"""
 		Generates the forecasted data by calculating a moving average of the prior number of
 		`periods` in the provided data.
+
+		:param periods: the number of periods to include in the averaging calculation
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		_data = self.__flat_data if periods > len(self.data[-1]) else self.data[-1]
 		if (periods - 1) > len(self.__flat_data):
 			raise Exception("Cannot average more periods than existing in data.")
 
+		n = n or len(self.data[-1])
 		moving_average = _data[-periods:]
-		for i in range(len(self.data[-1])):
+		for i in range(n):
 			moving_average.append(mean(moving_average[-periods:]))
 
 		# Remove the historical data needed for the first several forecast period calcs
@@ -113,46 +145,62 @@ class Forecast:
 
 		return self
 
-	def linear_approximation(self, periods: int) -> "Forecast":
+	def linear_approximation(self, periods: int, n: int | None = None) -> "Forecast":
 		"""
-		Extrapolates the slope, or trend line, from the most recent item in the provided data to
-		the item that's `periods` back from it, then applies that trend to the most recent
-		provided data item onwards to generate the forecast.
+		Extrapolates the slope, or trend line, from the most recent value in the provided data to
+		the value that is `periods` back from it, then applies that trend to the most recent
+		provided data value onwards to generate the forecast.
+
+		:param periods: the number of periods back to get the value to use with the most recent
+		value in the provided data to calculate the slope, or trend line, to use to generate the
+		forecast
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		_data = self.__flat_data if periods >= len(self.data[-1]) else self.data[-1]
 		if (periods - 1) > len(_data):
 			raise Exception(
 				"Cannot calculate the linear approximation slope for more periods than existing in data."
 			)
+
+		n = n or len(self.data[-1])
 		slope = (_data[-1] - _data[-periods - 1]) / Decimal(periods)
-		self.forecast = [_data[-1] + (slope * Decimal(i + 1)) for i in range(len(self.data[-1]))]
+		self.forecast = [_data[-1] + (slope * Decimal(i + 1)) for i in range(n)]
 
 		return self
 
-	def least_squares_regression(self, periods: int) -> "Forecast":
+	def least_squares_regression(self, periods: int, n: int | None = None) -> "Forecast":
 		"""
 		Finds a line of best fit via the Least Squares Regression method using the given `periods`
 		of provided data. It applies the calculated slope (m) and intercept (b) to generate the
 		forecasted values with the formula y = mx + b.
+
+		:param periods: the number of periods of provided data to find the line of best fit
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		x = [Decimal(i) for i in range(1, periods + 1)]
 		_data = self.__flat_data if periods > len(self.data[-1]) else self.data[-1]
 		if (periods - 1) > len(_data):
 			raise Exception("Cannot determine line of best fit using more periods than existing in data.")
-		y = _data[-periods:]
 
+		y = _data[-periods:]
+		n = n or len(self.data[-1])
 		slope, intercept, _, _, _ = linregress(x, y)
-		self.forecast = [
-			(Decimal(i) * slope) + intercept for i in range(periods + 1, periods + 1 + len(self.data[-1]))
-		]
+		self.forecast = [(Decimal(i) * slope) + intercept for i in range(periods + 1, periods + 1 + n)]
 
 		return self
 
-	def second_degree_approximation(self, periods: int) -> "Forecast":
+	def second_degree_approximation(self, periods: int, n: int | None = None) -> "Forecast":
 		"""
 		Fits a second-degree polynomial of the form y = a + bx + cx^2 using the given `periods` of
 		provided data as inputs. It applies the calculated coefficients (a, b, and c) to generate
 		the forecasted values.
+
+		:param periods: the number of periods of provided data to find the second-degree
+		polynomial's coefficients
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		x = [Decimal(i) for i in range(1, periods + 1)]
 		_data = self.__flat_data if periods > len(self.data[-1]) else self.data[-1]
@@ -161,18 +209,24 @@ class Forecast:
 				"Cannot determine second-degree polynomial trend using more periods than existing in data."
 			)
 		y = _data[-periods:]
+		n = n or len(self.data[-1])
 		c, b, a = polyfit(x, y, deg=2)
 		self.forecast = [
-			a + (b * Decimal(i)) + (c * (Decimal(i) ** 2))
-			for i in range(periods + 1, periods + 1 + len(self.data[-1]))
+			a + (b * Decimal(i)) + (c * (Decimal(i) ** 2)) for i in range(periods + 1, periods + 1 + n)
 		]
 
 		return self
 
-	def flexible_method(self, percent: Decimal, periods: int) -> "Forecast":
+	def flexible_method(self, percent: Decimal, periods: int, n: int | None = None) -> "Forecast":
 		"""
 		Applies the given `percent` growth rate to provided data, starting with `periods` most
 		recent value.
+
+		:param percent: rate applied to generate the forecasted values
+		:param periods: the number of periods back from the end of the provided data to use as the
+		starting point for the forecast
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		# Confirm percent is of Decimal type
 		if not isinstance(percent, Decimal):
@@ -183,7 +237,8 @@ class Forecast:
 			raise Exception("Cannot build forecast off a period farther back from what's in existing data.")
 
 		flexible_method = _data[-periods:]
-		for i in range(len(self.data[-1])):
+		n = n or len(self.data[-1])
+		for i in range(n):
 			flexible_method.append(flexible_method[i] * (self.__dvone + (percent / self.__dvhundred)))
 
 		# Remove the historical data needed for the first several forecast period calcs
@@ -193,13 +248,19 @@ class Forecast:
 
 		return self
 
-	def weighted_moving_average(self, periods: int, weights: list | tuple) -> "Forecast":
+	def weighted_moving_average(
+		self, periods: int, weights: list | tuple, n: int | None = None
+	) -> "Forecast":
 		"""
 		Similar to moving average, but applies the given `weights` to the `periods` included in
 		the average to generate the forecasted values.
 
-		The number of `weights` provided must match the number of `periods`, and must add to a
-		total of 1.
+		:param periods: the number of periods to include in the averaging calculation
+		:param weights: a sequence of values of type Decimal used to weight the periods in the
+		averaging calculation differently. The number of weights provided must match the number of
+		`periods`, and the sum of the weights must total 1
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		# Confirm weights are of Decimal type
 		if any([not isinstance(w, Decimal) for w in weights]):
@@ -208,8 +269,8 @@ class Forecast:
 		_data = self.__flat_data if periods > len(self.data[-1]) else self.data[-1]
 		if (periods - 1) > len(_data):
 			raise Exception("Cannot average more periods than existing in data.")
-		if sum(weights) != self.__dvone:
-			raise Exception("Total of weights must be exactly 1.")
+		if abs(sum(weights) - self.__dvone) > Decimal("1e-13"):
+			raise Exception(f"The sum of the weights must total 1. The given values sum to {sum(weights)}")
 		if len(weights) != periods:
 			raise Exception(
 				f"Weights must have as many elements as periods. Weights: {len(weights)} Periods: {periods}."
@@ -217,7 +278,8 @@ class Forecast:
 
 		weighted_moving_average_data = _data[-periods:]
 
-		for i in range(len(self.data[-1])):
+		n = n or len(self.data[-1])
+		for i in range(n):
 			weighted_moving_average_data.append(
 				sum(weights[j] * weighted_moving_average_data[i : i + periods][j] for j in range(len(weights)))
 			)
@@ -228,11 +290,15 @@ class Forecast:
 
 		return self
 
-	def linear_smoothing(self, periods: int) -> "Forecast":
+	def linear_smoothing(self, periods: int, n: int | None = None) -> "Forecast":
 		"""
-		Similar to the weighted moving average method, but instead of user-provided weights,
-		uses linearly-increasing weight values based on the number of `periods` to calculate
-		the average and generate the forecasted values.
+		Similar to the weighted moving average method, but instead of user-provided weights, uses
+		linearly-increasing weight values based on the number of `periods`. The calculated weights
+		are applied to the `periods` included in the average to generate the forecasted values.
+
+		:param periods: the number of periods to include in the averaging calculation
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		_data = self.__flat_data if periods > len(self.data[-1]) else self.data[-1]
 		if (periods - 1) > len(_data):
@@ -242,7 +308,8 @@ class Forecast:
 		weights = [Decimal(n) / W for n in range(1, periods + 1)]
 		linear_smoothing_data = _data[-periods:]
 
-		for i in range(len(self.data[-1])):
+		n = n or len(self.data[-1])
+		for i in range(n):
 			linear_smoothing_data.append(
 				sum(weights[j] * linear_smoothing_data[i : i + periods][j] for j in range(len(weights)))
 			)
@@ -253,11 +320,17 @@ class Forecast:
 
 		return self
 
-	def exponential_smoothing(self, periods: int, alpha: Decimal) -> "Forecast":
+	def exponential_smoothing(self, periods: int, alpha: Decimal, n: int | None = None) -> "Forecast":
 		"""
-		Applies calculated weights that are applied to the number of `periods` of data that are
-		exponentially decaying as they're applied to older data. The forecast is the last
-		calculated smoothed value for all forecasted periods.
+		Calculates a smoothed average over the given number of `periods` in the provided data and
+		uses the last calculated value for all forecasted periods. `alpha` is the smoothing
+		parameter - values closer to 1 put more weight on the actual data, values closer to 0 put
+		more weight on the previous period's smoothed value.
+
+		:param periods: the number of periods to include in the smoothing process
+		:param alpha: the smoothing parameter, must be a value between 0 and 1
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
 		"""
 		if not isinstance(alpha, Decimal):
 			raise TypeError("alpha must be of type Decimal.")
@@ -270,10 +343,11 @@ class Forecast:
 		smoothed = [_data[-periods]]
 		values = _data[-periods + 1 :]
 
+		n = n or len(self.data[-1])
 		for i, d in enumerate(values):
 			smoothed.append(alpha * d + (self.__dvone - alpha) * smoothed[i])
 
-		self.forecast = [smoothed[-1]] * len(self.data[-1])
+		self.forecast = [smoothed[-1]] * n
 
 		return self
 
@@ -281,6 +355,7 @@ class Forecast:
 		self,
 		alpha: Decimal,
 		beta: Decimal,
+		n: int | None = None,
 		seasonality: list[Decimal] | tuple[Decimal] | None = None,
 	) -> "Forecast":
 		"""
@@ -292,11 +367,21 @@ class Forecast:
 		`alpha` is the smoothing factor for the averaging of data, `beta` is the smoothing factor
 		for the trend component.
 
-		A list or tuple of `seasonality` factors may be optionally provided and must be the same
-		length as the most recent provided data. If it's not provided, then the method requires
-		two lists of provided historical data to make the calculation. Seasonality factors center
-		around 1 (in other words, the average of the provided seasonality factors must equal 1),
-		as they represent the contribution of a given period to the total.
+		A list or tuple of `seasonality` factors that represent the contribution of a given period
+		to the total may be optionally provided. (If not, the method calculates seasonality from
+		the sequence(s) of provided data.) Seasonality values must be factors that centers around
+		1 (in other words, the average of the seasonality values equals 1). If data is only
+		available as percents, they can be converted to factors by multiplying each percent by the
+		number of provided seasonality values. For example, a list of monthly seasonality values
+		for a year expressed as that month's percent of the annual total would be each multiplied
+		by 12 to get the equivalent factors.
+
+		:param alpha: the averaging smoothing parameter, must be a value between 0 and 1
+		:param beta: the trend smoothing parameter, must be a value between 0 and 1
+		:param n: the number of periods to forecast. If None, the forecast is same length as the
+		most recent previous period, which is stored as the last sequence in `data`
+		:param seasonality: sequence of seasonality factors for the number of periods the sequence
+		comprises
 		"""
 		if not isinstance(alpha, Decimal):
 			raise TypeError("alpha must be of type Decimal.")
@@ -308,26 +393,20 @@ class Forecast:
 			raise Exception("beta must be a value between 0 and 1.")
 		if seasonality and any([not isinstance(s, Decimal) for s in seasonality]):
 			raise TypeError("Seasonality values must be of type Decimal.")
-		if seasonality and len(seasonality) != len(self.data[-1]):
-			raise Exception(
-				"Provided seasonality values must be of same length as most recent provided data."
-			)
-		if seasonality and abs(Decimal(sum(seasonality)) - Decimal(len(seasonality))) > Decimal("1e-13"):
-			raise Exception(
-				"Provided seasonality values should sum to the total length, aka they must have an average value of 1."
-			)
 
 		# Calculate seasonality factors if not provided
 		if not seasonality:
 			seasonality = calculate_seasonality_factors(self.data)
+		avg_seasonality = cycle(seasonality)
+		fc_seasonality = cycle(seasonality)
 
-		# Initialize first value for averages and trends
-		averages = [self.data[-1][0] / seasonality[0]]
+		# Initialize first value for de-seasonalized averages and trends
+		averages = [self.data[-1][0] / next(avg_seasonality)]
 		trends = [self.__dvzero]
 
-		# Calculate the remaining averages and trends
+		# Calculate the remaining averages and trends in provided data
 		for i in range(1, len(self.data[-1])):
-			A_t = (alpha * (self.data[-1][i] / seasonality[i])) + (
+			A_t = (alpha * (self.data[-1][i] / next(avg_seasonality))) + (
 				(self.__dvone - alpha) * (averages[i - 1] + trends[i - 1])
 			)
 			T_t = beta * (A_t - averages[i - 1]) + ((self.__dvone - beta) * trends[i - 1])
@@ -335,8 +414,9 @@ class Forecast:
 			trends.append(T_t)
 
 		exponential_smoothing_trend_seasonality = []
-		for m in range(1, len(self.data[-1]) + 1):
-			F = (averages[-1] + (trends[-1] * Decimal(m))) * seasonality[m - 1]
+		n = n or len(self.data[-1])
+		for m in range(1, n + 1):
+			F = (averages[-1] + (trends[-1] * Decimal(m))) * next(fc_seasonality)
 			exponential_smoothing_trend_seasonality.append(F)
 
 		self.forecast = exponential_smoothing_trend_seasonality
@@ -523,12 +603,13 @@ def calculate_seasonality_factors(
 	data: typing.Sequence[typing.Sequence[Decimal]],
 ) -> list[Decimal]:
 	"""
-	Calculates seasonality from the provided `data` - a sequence of sequences of historical data
-	that are of type Decimal. The sequences in `data` must all be the same length (i.e. they all
-	have the same number of periods).
+	Calculates seasonality from the provided `data`, which should be a sequence of sequences of
+	historical data that are of type Decimal. The sequences in `data` should all be the same
+	length (i.e. they all have the same number of periods), but if not, the calculated seasonality
+	will be the same length as the shortest provided sequence in `data`.
 
-	Returns a list of seasonality factors centering around 1 of same length as each sequence in
-	`data`.
+	Returns a list of seasonality factors centering around 1 of same length as the shortest
+	sequence in `data`.
 	"""
 	if not data or any(not d for d in data):
 		raise Exception("Sequences of provided data may not be empty.")
@@ -536,11 +617,8 @@ def calculate_seasonality_factors(
 	if any([not isinstance(n, Decimal) for d in data for n in d]):
 		raise TypeError("Values in provided data must be of type Decimal.")
 
-	num_periods = len(data[-1])
-	if any([len(d) != num_periods for d in data]):
-		raise Exception("Historical sequences in data must all have the same number of periods.")
-
-	total_units = Decimal(sum(sum(d) for d in data))
+	num_periods = min(len(d) for d in data)
+	total_units = Decimal(sum(sum(d[:num_periods]) for d in data))
 	seasonality = [
 		(sum(hist_period[i] for hist_period in data) / total_units) * Decimal(num_periods)
 		for i in range(num_periods)
