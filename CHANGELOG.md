@@ -1,6 +1,24 @@
 # CHANGELOG
 
 
+## v0.4.0 (2024-11-13)
+
+### Bug Fixes
+
+- Sum in seasonality calc if different-length data
+  ([`fa95df2`](https://github.com/agritheory/forecast/commit/fa95df213f880f3375debe91cdf8a24b583ec6eb))
+
+### Features
+
+- Add user-defined forecast period to all methods
+  ([`d91adb2`](https://github.com/agritheory/forecast/commit/d91adb2e3554bd3072ec6bdc6f0f533b5c4a8941))
+
+### Testing
+
+- Add missing data test
+  ([`bf85311`](https://github.com/agritheory/forecast/commit/bf853115620070b77ff487dd2870942165bcdb7c))
+
+
 ## v0.3.0 (2024-11-13)
 
 ### Documentation
