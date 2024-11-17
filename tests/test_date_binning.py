@@ -257,6 +257,32 @@ class TestBins:
 		bins = Period().get_date_bins(sd, ed, "ISO Month (4 + 5 + 4)", inclusive=True)
 		assert bins == output
 
+	def test_iso_month_454_week_5_start_18_mos(self):
+		output = [
+			(datetime.date(2023, 1, 30), datetime.date(2023, 3, 5)),
+			(datetime.date(2023, 3, 6), datetime.date(2023, 4, 2)),
+			(datetime.date(2023, 4, 3), datetime.date(2023, 4, 30)),
+			(datetime.date(2023, 5, 1), datetime.date(2023, 6, 4)),
+			(datetime.date(2023, 6, 5), datetime.date(2023, 7, 2)),
+			(datetime.date(2023, 7, 3), datetime.date(2023, 7, 30)),
+			(datetime.date(2023, 7, 31), datetime.date(2023, 9, 3)),
+			(datetime.date(2023, 9, 4), datetime.date(2023, 10, 1)),
+			(datetime.date(2023, 10, 2), datetime.date(2023, 10, 29)),
+			(datetime.date(2023, 10, 30), datetime.date(2023, 12, 3)),
+			(datetime.date(2023, 12, 4), datetime.date(2023, 12, 31)),
+			(datetime.date(2024, 1, 1), datetime.date(2024, 1, 28)),
+			(datetime.date(2024, 1, 29), datetime.date(2024, 3, 3)),
+			(datetime.date(2024, 3, 4), datetime.date(2024, 3, 31)),
+			(datetime.date(2024, 4, 1), datetime.date(2024, 4, 28)),
+			(datetime.date(2024, 4, 29), datetime.date(2024, 6, 2)),
+			(datetime.date(2024, 6, 3), datetime.date(2024, 6, 30)),
+			(datetime.date(2024, 7, 1), datetime.date(2024, 7, 28)),
+		]
+		sd = datetime.date.fromisocalendar(2023, 5, 1)  # Week 05
+		ed = datetime.date.fromisocalendar(2024, 31, 1)  # "Aug" start week (18 months later)
+		bins = Period().get_date_bins(sd, ed, "ISO Month (4 + 5 + 4)", inclusive=False)
+		assert bins == output
+
 	def test_iso_month_445(self, date_jan_2_23, date_dec_31_23):
 		output = [
 			(datetime.date(2023, 1, 2), datetime.date(2023, 1, 29)),
