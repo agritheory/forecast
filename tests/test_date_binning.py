@@ -617,7 +617,7 @@ class TestLabels:
 
 	def test_get_iso_week_and_year(self):
 		date = datetime.date(2020, 12, 28)
-		iso_w, iso_y = Period().get_iso_week_and_year(date)
+		iso_w, iso_y = Period()._get_iso_week_and_year(date)
 		assert iso_w == 53 and iso_y == 2020
 
 	def test_iso_week_labels(self, date_jan_2_23, date_feb_13_23):
