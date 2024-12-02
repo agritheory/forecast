@@ -85,7 +85,7 @@ commands =
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:tool.poetry.version"]
-version_variable = [
+version_variables = [
     "forecast/__init__.py:__version__"
 ]
 
