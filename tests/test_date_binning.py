@@ -110,10 +110,6 @@ class TestBins:
 		with pytest.raises(ValueError):
 			Period().get_date_bins(date_dec_31_23, date_jan_2_23)
 
-	def test_iso_annual_error(self, date_jan_2_23, date_dec_31_23):
-		with pytest.raises(ValueError):
-			Period().get_iso_annual_start_dates(date_jan_2_23, date_dec_31_23, ("not_years", 1))
-
 	def test_no_custom_days_provided(self, date_jan_2_23, date_dec_31_23):
 		with pytest.raises(ValueError):
 			Period().get_date_bins(date_jan_2_23, date_dec_31_23, "Custom Days")
@@ -248,6 +244,45 @@ class TestBins:
 		)
 		assert bins == output
 
+	def test_iso_month_454_stub(self):
+		output = [
+			(datetime.date(2022, 12, 26), datetime.date(2023, 1, 1)),
+			(datetime.date(2023, 1, 2), datetime.date(2023, 1, 29)),
+			(datetime.date(2023, 1, 30), datetime.date(2023, 3, 5)),
+			(datetime.date(2023, 3, 6), datetime.date(2023, 4, 2)),
+			(datetime.date(2023, 4, 3), datetime.date(2023, 4, 5)),
+		]
+		sd = datetime.date(2022, 12, 26)  # Monday of W52 prior year
+		ed = datetime.date(2023, 4, 5)  # mid-week
+		bins = Period().get_date_bins(sd, ed, "ISO Month (4 + 5 + 4)", inclusive=True)
+		assert bins == output
+
+	def test_iso_month_454_week_5_start_18_mos(self):
+		output = [
+			(datetime.date(2023, 1, 30), datetime.date(2023, 3, 5)),
+			(datetime.date(2023, 3, 6), datetime.date(2023, 4, 2)),
+			(datetime.date(2023, 4, 3), datetime.date(2023, 4, 30)),
+			(datetime.date(2023, 5, 1), datetime.date(2023, 6, 4)),
+			(datetime.date(2023, 6, 5), datetime.date(2023, 7, 2)),
+			(datetime.date(2023, 7, 3), datetime.date(2023, 7, 30)),
+			(datetime.date(2023, 7, 31), datetime.date(2023, 9, 3)),
+			(datetime.date(2023, 9, 4), datetime.date(2023, 10, 1)),
+			(datetime.date(2023, 10, 2), datetime.date(2023, 10, 29)),
+			(datetime.date(2023, 10, 30), datetime.date(2023, 12, 3)),
+			(datetime.date(2023, 12, 4), datetime.date(2023, 12, 31)),
+			(datetime.date(2024, 1, 1), datetime.date(2024, 1, 28)),
+			(datetime.date(2024, 1, 29), datetime.date(2024, 3, 3)),
+			(datetime.date(2024, 3, 4), datetime.date(2024, 3, 31)),
+			(datetime.date(2024, 4, 1), datetime.date(2024, 4, 28)),
+			(datetime.date(2024, 4, 29), datetime.date(2024, 6, 2)),
+			(datetime.date(2024, 6, 3), datetime.date(2024, 6, 30)),
+			(datetime.date(2024, 7, 1), datetime.date(2024, 7, 28)),
+		]
+		sd = datetime.date.fromisocalendar(2023, 5, 1)  # Week 05
+		ed = datetime.date.fromisocalendar(2024, 31, 1)  # "Aug" start week (18 months later)
+		bins = Period().get_date_bins(sd, ed, "ISO Month (4 + 5 + 4)", inclusive=False)
+		assert bins == output
+
 	def test_iso_month_445(self, date_jan_2_23, date_dec_31_23):
 		output = [
 			(datetime.date(2023, 1, 2), datetime.date(2023, 1, 29)),
@@ -266,6 +301,19 @@ class TestBins:
 		bins = Period().get_date_bins(
 			date_jan_2_23, date_dec_31_23, "ISO Month (4 + 4 + 5)", inclusive=True
 		)
+		assert bins == output
+
+	def test_iso_month_445_stub(self):
+		output = [
+			(datetime.date(2022, 12, 26), datetime.date(2023, 1, 1)),
+			(datetime.date(2023, 1, 2), datetime.date(2023, 1, 29)),
+			(datetime.date(2023, 1, 30), datetime.date(2023, 2, 26)),
+			(datetime.date(2023, 2, 27), datetime.date(2023, 4, 2)),
+			(datetime.date(2023, 4, 3), datetime.date(2023, 4, 5)),
+		]
+		sd = datetime.date(2022, 12, 26)  # Monday of W52 prior year
+		ed = datetime.date(2023, 4, 5)  # mid-week
+		bins = Period().get_date_bins(sd, ed, "ISO Month (4 + 4 + 5)", inclusive=True)
 		assert bins == output
 
 	def test_iso_month_4_standard(self, date_jan_2_23, date_dec_31_23):
@@ -410,41 +458,50 @@ class TestBins:
 		bins = Period().get_date_bins(date_jan_5_23, date_feb_16_23, "Biweekly", inclusive=False)
 		assert bins == output
 
-	def test_cal_month(self, date_jan_7_23, date_mar_15_23):
+	def test_monthly(self, date_jan_7_23, date_mar_15_23):
 		output = [
 			(datetime.date(2023, 1, 7), datetime.date(2023, 2, 6)),
 			(datetime.date(2023, 2, 7), datetime.date(2023, 3, 6)),
 			(datetime.date(2023, 3, 7), datetime.date(2023, 3, 15)),
 		]
+		bins = Period().get_date_bins(date_jan_7_23, date_mar_15_23, "Monthly", inclusive=True)
+		assert bins == output
+
+	def test_cal_month(self, date_jan_7_23, date_mar_15_23):
+		output = [
+			(datetime.date(2023, 1, 7), datetime.date(2023, 1, 31)),
+			(datetime.date(2023, 2, 1), datetime.date(2023, 2, 28)),
+			(datetime.date(2023, 3, 1), datetime.date(2023, 3, 15)),
+		]
 		bins = Period().get_date_bins(date_jan_7_23, date_mar_15_23, "Calendar Month", inclusive=True)
 		assert bins == output
 
-	def test_cal_quarter_standard(self, date_jan_1_23, date_dec_31_23):
-		output = [
-			(datetime.date(2023, 1, 1), datetime.date(2023, 3, 31)),
-			(datetime.date(2023, 4, 1), datetime.date(2023, 6, 30)),
-			(datetime.date(2023, 7, 1), datetime.date(2023, 9, 30)),
-			(datetime.date(2023, 10, 1), datetime.date(2023, 12, 31)),
-		]
-		bins = Period().get_date_bins(date_jan_1_23, date_dec_31_23, "Calendar Quarter", inclusive=True)
-		assert bins == output
-
-	def test_cal_quarter_non_standard(self, date_jan_7_23):
+	def test_quarterly(self, date_jan_7_23):
 		output = [
 			(datetime.date(2023, 1, 7), datetime.date(2023, 4, 6)),
 			(datetime.date(2023, 4, 7), datetime.date(2023, 7, 6)),
 			(datetime.date(2023, 7, 7), datetime.date(2023, 10, 6)),
 		]
 		ed = datetime.date(2023, 10, 6)
-		bins = Period().get_date_bins(date_jan_7_23, ed, "Calendar Quarter", inclusive=True)
+		bins = Period().get_date_bins(date_jan_7_23, ed, "Quarterly", inclusive=True)
 		assert bins == output
 
-	def test_cal_quarter_oct_fy(self, date_nov_1_23, date_apr_30_24):
+	def test_cal_quarter(self, date_jan_7_23, date_dec_31_23):
+		output = [
+			(datetime.date(2023, 1, 7), datetime.date(2023, 3, 31)),
+			(datetime.date(2023, 4, 1), datetime.date(2023, 6, 30)),
+			(datetime.date(2023, 7, 1), datetime.date(2023, 9, 30)),
+			(datetime.date(2023, 10, 1), datetime.date(2023, 12, 31)),
+		]
+		bins = Period().get_date_bins(date_jan_7_23, date_dec_31_23, "Calendar Quarter", inclusive=True)
+		assert bins == output
+
+	def test_quarterly_oct_fy(self, date_nov_1_23, date_apr_30_24):
 		output = [
 			(datetime.date(2023, 11, 1), datetime.date(2024, 1, 31)),
 			(datetime.date(2024, 2, 1), datetime.date(2024, 4, 30)),
 		]
-		bins = Period().get_date_bins(date_nov_1_23, date_apr_30_24, "Calendar Quarter", inclusive=True)
+		bins = Period().get_date_bins(date_nov_1_23, date_apr_30_24, "Quarterly", inclusive=True)
 		assert bins == output
 
 	def test_cal_year_standard(self, date_jan_1_23, date_dec_31_25):
@@ -586,7 +643,7 @@ class TestLabels:
 
 	def test_get_iso_week_and_year(self):
 		date = datetime.date(2020, 12, 28)
-		iso_w, iso_y = Period().get_iso_week_and_year(date)
+		iso_w, iso_y = Period()._get_iso_week_and_year(date)
 		assert iso_w == 53 and iso_y == 2020
 
 	def test_iso_week_labels(self, date_jan_2_23, date_feb_13_23):

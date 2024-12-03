@@ -63,7 +63,7 @@ jobs:
           source .venv/bin/activate
           rm -rf '${{ github.workspace }}/docs/*.*'
           mkdir -p '${{ github.workspace }}/docs/example_calcs_files'
-          jupyter nbconvert --execute --output-dir='${{ github.workspace }}/docs' --to markdown ${{ github.workspace }}/example_calcs.ipynb
+          jupyter nbconvert --execute --output-dir='${{ github.workspace }}/docs' --to markdown ${{ github.workspace }}/example_calcs.ipynb ${{ github.workspace }}/date_binning.ipynb
 
       - name: Commit notebook conversion changes
         uses: stefanzweifel/git-auto-commit-action@v5
