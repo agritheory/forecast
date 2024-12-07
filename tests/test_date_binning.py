@@ -662,19 +662,19 @@ class TestLabels:
 
 	def test_iso_month_4_labels(self, date_jan_2_23):
 		output = [
-			"Jan-23",
-			"Feb-23",
-			"Mar-23",
-			"Apr-23",
-			"May-23",
-			"Jun-23",
-			"Jul-23",
-			"Aug-23",
-			"Sep-23",
-			"Oct-23",
-			"Nov-23",
-			"Dec-23",
-			"M13-23",
+			"Jan (4w)-23",
+			"Feb (4w)-23",
+			"Mar (4w)-23",
+			"Apr (4w)-23",
+			"May (4w)-23",
+			"Jun (4w)-23",
+			"Jul (4w)-23",
+			"Aug (4w)-23",
+			"Sep (4w)-23",
+			"Oct (4w)-23",
+			"Nov (4w)-23",
+			"Dec (4w)-23",
+			"M13 (4w)-23",
 		]
 		ed = datetime.date(2024, 1, 1)
 		p = Period(date_jan_2_23, ed, "ISO Month (4 Weeks)")
@@ -684,18 +684,18 @@ class TestLabels:
 
 	def test_iso_month_454_full_year_labels(self, date_jan_2_23):
 		output = [
-			"Jan-23",
-			"Feb-23",
-			"Mar-23",
-			"Apr-23",
-			"May-23",
-			"Jun-23",
-			"Jul-23",
-			"Aug-23",
-			"Sep-23",
-			"Oct-23",
-			"Nov-23",
-			"Dec-23",
+			"Jan (4w)-23",
+			"Feb (5w)-23",
+			"Mar (4w)-23",
+			"Apr (4w)-23",
+			"May (5w)-23",
+			"Jun (4w)-23",
+			"Jul (4w)-23",
+			"Aug (5w)-23",
+			"Sep (4w)-23",
+			"Oct (4w)-23",
+			"Nov (5w)-23",
+			"Dec (4w)-23",
 		]
 		ed = datetime.date(2024, 1, 1)
 		p = Period(date_jan_2_23, ed, "ISO Month (4 + 5 + 4)")
@@ -704,7 +704,7 @@ class TestLabels:
 		assert labels == output
 
 	def test_iso_month_454_labels(self, date_jan_2_23):
-		output = ["Jan-23", "Feb-23"]
+		output = ["Jan (4w)-23", "Feb (5w)-23"]
 		ed = datetime.date(2023, 3, 6)
 		p = Period(date_jan_2_23, ed, "ISO Month (4 + 5 + 4)")
 		bins = p.get_date_bins(inclusive=False)
@@ -712,7 +712,7 @@ class TestLabels:
 		assert labels == output
 
 	def test_iso_month_445_labels(self, date_jan_2_23):
-		output = ["Jan-23", "Feb-23", "Mar-23"]
+		output = ["Jan (4w)-23", "Feb (4w)-23", "Mar (5w)-23"]
 		ed = datetime.date(2023, 3, 6)
 		p = Period(date_jan_2_23, ed, "ISO Month (4 + 4 + 5)")
 		bins = p.get_date_bins(inclusive=False)
