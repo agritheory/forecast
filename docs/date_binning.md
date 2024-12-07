@@ -144,7 +144,7 @@ bins
 
 ### Get Labels for Date Bins
 
-The `Period` class has the `get_period_labels` method to generate labels for given date bins. It has built-in formats for all periodicity options, or the user can provide their own format string to suite their needs. The method supports any Python [strftime formatters](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes), which uses the 1989 C standard.
+The `Period` class has the `get_period_labels` method to generate labels for given date bins. It has built-in formats for all periodicity options, or the user can provide their own format string to suit their needs. The method supports any Python [strftime formatters](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes), which uses the 1989 C standard.
 
 If a custom format is provided, the user can also indicate which date for each bin - the bin's start date or the bin's end date - to use to create the labels. The built-in formats use the bin's start date for ISO-based periodicity options and the bin's end date for the others, with the exception of the "Entire Period" periodicity, which uses both dates.
 
@@ -392,21 +392,21 @@ p.get_period_labels(bins, "ISO Month (4 Weeks)")
 
 
 
-    ['M13-23',
-     'Jan-24',
-     'Feb-24',
-     'Mar-24',
-     'Apr-24',
-     'May-24',
-     'Jun-24',
-     'Jul-24',
-     'Aug-24',
-     'Sep-24',
-     'Oct-24',
-     'Nov-24',
-     'Dec-24',
-     'M13-24',
-     'Jan-25']
+    ['M13 (4w)-23',
+     'Jan (4w)-24',
+     'Feb (4w)-24',
+     'Mar (4w)-24',
+     'Apr (4w)-24',
+     'May (4w)-24',
+     'Jun (4w)-24',
+     'Jul (4w)-24',
+     'Aug (4w)-24',
+     'Sep (4w)-24',
+     'Oct (4w)-24',
+     'Nov (4w)-24',
+     'Dec (4w)-24',
+     'M13 (4w)-24',
+     'Jan (4w)-25']
 
 
 
@@ -450,20 +450,20 @@ p.get_period_labels(bins, "ISO Month (4 + 5 + 4)")
 
 
 
-    ['Dec-23',
-     'Jan-24',
-     'Feb-24',
-     'Mar-24',
-     'Apr-24',
-     'May-24',
-     'Jun-24',
-     'Jul-24',
-     'Aug-24',
-     'Sep-24',
-     'Oct-24',
-     'Nov-24',
-     'Dec-24',
-     'Jan-25']
+    ['Dec (4w)-23',
+     'Jan (4w)-24',
+     'Feb (5w)-24',
+     'Mar (4w)-24',
+     'Apr (4w)-24',
+     'May (5w)-24',
+     'Jun (4w)-24',
+     'Jul (4w)-24',
+     'Aug (5w)-24',
+     'Sep (4w)-24',
+     'Oct (4w)-24',
+     'Nov (5w)-24',
+     'Dec (4w)-24',
+     'Jan (4w)-25']
 
 
 
@@ -507,20 +507,20 @@ p.get_period_labels(bins, "ISO Month (4 + 4 + 5)")
 
 
 
-    ['Dec-23',
-     'Jan-24',
-     'Feb-24',
-     'Mar-24',
-     'Apr-24',
-     'May-24',
-     'Jun-24',
-     'Jul-24',
-     'Aug-24',
-     'Sep-24',
-     'Oct-24',
-     'Nov-24',
-     'Dec-24',
-     'Jan-25']
+    ['Dec (5w)-23',
+     'Jan (4w)-24',
+     'Feb (4w)-24',
+     'Mar (5w)-24',
+     'Apr (4w)-24',
+     'May (4w)-24',
+     'Jun (5w)-24',
+     'Jul (4w)-24',
+     'Aug (4w)-24',
+     'Sep (5w)-24',
+     'Oct (4w)-24',
+     'Nov (4w)-24',
+     'Dec (5w)-24',
+     'Jan (4w)-25']
 
 
 
@@ -648,13 +648,13 @@ bins
 
 
 
-    [(datetime.date(2024, 12, 3), datetime.date(2024, 12, 7)),
-     (datetime.date(2024, 12, 8), datetime.date(2024, 12, 12)),
-     (datetime.date(2024, 12, 13), datetime.date(2024, 12, 17)),
-     (datetime.date(2024, 12, 18), datetime.date(2024, 12, 22)),
-     (datetime.date(2024, 12, 23), datetime.date(2024, 12, 27)),
-     (datetime.date(2024, 12, 28), datetime.date(2025, 1, 1)),
-     (datetime.date(2025, 1, 2), datetime.date(2025, 1, 2))]
+    [(datetime.date(2024, 12, 7), datetime.date(2024, 12, 11)),
+     (datetime.date(2024, 12, 12), datetime.date(2024, 12, 16)),
+     (datetime.date(2024, 12, 17), datetime.date(2024, 12, 21)),
+     (datetime.date(2024, 12, 22), datetime.date(2024, 12, 26)),
+     (datetime.date(2024, 12, 27), datetime.date(2024, 12, 31)),
+     (datetime.date(2025, 1, 1), datetime.date(2025, 1, 5)),
+     (datetime.date(2025, 1, 6), datetime.date(2025, 1, 6))]
 
 
 
@@ -666,13 +666,13 @@ p.get_period_labels(bins, "Custom Days")
 
 
 
-    ['12/07/24',
-     '12/12/24',
-     '12/17/24',
-     '12/22/24',
-     '12/27/24',
-     '01/01/25',
-     '01/02/25']
+    ['12/11/24',
+     '12/16/24',
+     '12/21/24',
+     '12/26/24',
+     '12/31/24',
+     '01/05/25',
+     '01/06/25']
 
 
 
