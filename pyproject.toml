@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "forecast"
+name = "forecast-at"
 version = "0.4.0"
 description = "Generic forecast utilities"
 license = "MIT"
@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
@@ -61,19 +61,22 @@ legacy_tox_ini = """
 min_version = 4
 requires =
     tox-gh-actions>=3
-envlist = py310, py311, py312, linting
+envlist = py310, py311, py312, py313, linting
 
 [gh-actions]
 python =
     3.10: py310
     3.11: py311
-    3.12: py312, linting
+    3.12: py312
+    3.13: py313, linting
 
 [testenv]
 skip_install = true
 allowlist_externals = poetry
 commands_pre =
     poetry install
+    poetry check
+    poetry lock
 
 [testenv:linting]
 description = run linters
@@ -99,7 +102,12 @@ commands =
     pytest tests/ --disable-warnings -s
 
 [testenv:py312]
-description = run pytest and coverage on 3.12
+description = run pytest on 3.12
+commands =
+    pytest tests/ --disable-warnings -s
+
+[testenv:py313]
+description = run pytest and coverage on 3.13
 commands =
     pytest tests/ --cov=forecast --cov-report=xml --disable-warnings -s
 """
