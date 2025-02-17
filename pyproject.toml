@@ -1,24 +1,31 @@
-[tool.poetry]
+[project]
 name = "forecast-at"
-version = "0.4.0"
 description = "Generic forecast utilities"
-license = "MIT"
-authors = ["Tyler Matteson <tyler@agritheory.com>", "Heather Kusmierz <heather.kusmierz@gmail.com>"]
+authors = [
+    { name = "Tyler Matteson", email = "tyler@agritheory.com" },
+    { name = "Heather Kusmierz", email = "heather.kusmierz@gmail.com" },
+]
 readme = "README.md"
+license = { file = "LICENSE" }
+dynamic = [ "version", "dependencies", "requires-python", "classifiers" ]
+
+[project.urls]
 homepage = "https://github.com/agritheory/forecast"
-repository = "https://github.com/agritheory/forecast"
+source = "https://github.com/agritheory/forecast"
+changelog = "https://github.com/agritheory/forecast/CHANGELOG.md"
+documentation = "https://github.com/agritheory/forecast/tree/main/docs/"
+issues = "https://github.com/agritheory/forecast/issues"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+version = "0.4.0"
 packages = [{ include = "forecast" }]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Environment :: Web Environment",
   "Framework :: Pytest",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -114,9 +121,7 @@ commands =
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:tool.poetry.version"]
-version_variables = [
-    "forecast/__init__.py:__version__"
-]
+version_variables = ["forecast/__init__.py:__version__"]
 
 [tool.semantic_release.branches.version]
 match = "main"
