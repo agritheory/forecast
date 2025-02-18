@@ -1,5 +1,5 @@
 [project]
-name = "forecast-at"
+name = "atforecast"
 description = "Generic forecast utilities"
 authors = [
     { name = "Tyler Matteson", email = "tyler@agritheory.com" },
