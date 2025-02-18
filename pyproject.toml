@@ -1,16 +1,41 @@
-[tool.poetry]
-name = "forecast"
-version = "0.4.0"
+[project]
+name = "atforecast"
 description = "Generic forecast utilities"
-authors = ["Tyler Matteson <tyler@agritheory.com>", "Heather Kusmierz <heather.kusmierz@gmail.com>"]
-license = "MIT"
+authors = [
+    { name = "Tyler Matteson", email = "tyler@agritheory.com" },
+    { name = "Heather Kusmierz", email = "heather.kusmierz@gmail.com" },
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+dynamic = [ "version", "dependencies", "requires-python", "classifiers" ]
+
+[project.urls]
+homepage = "https://github.com/agritheory/forecast"
+source = "https://github.com/agritheory/forecast"
+changelog = "https://github.com/agritheory/forecast/CHANGELOG.md"
+documentation = "https://github.com/agritheory/forecast/tree/main/docs/"
+issues = "https://github.com/agritheory/forecast/issues"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+version = "0.4.0"
+packages = [{ include = "forecast" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Web Environment",
+  "Framework :: Pytest",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+python = ">=3.10,<3.14"
 numpy = "^1.26.4"
 pandas = "^2.2.2"
 scipy = "^1.14.0"
@@ -34,25 +59,31 @@ use_parentheses = true
 ensure_newline_before_comments = true
 indent = "\t"
 
+[tool.codespell]
+skip = '*.ipynb'
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]
 min_version = 4
-requires =  
+requires =
     tox-gh-actions>=3
-envlist = py310, py311, py312, linting
+envlist = py310, py311, py312, py313, linting
 
 [gh-actions]
 python =
     3.10: py310
     3.11: py311
-    3.12: py312, linting
+    3.12: py312
+    3.13: py313, linting
 
 [testenv]
 skip_install = true
 allowlist_externals = poetry
 commands_pre =
     poetry install
+    poetry check
+    poetry lock
 
 [testenv:linting]
 description = run linters
@@ -62,7 +93,7 @@ commands_pre =
     python -m pip install mypy
     python -m pip install black git+https://github.com/agritheory/black.git
     mypy ./ --install-types --non-interactive
-commands = 
+commands =
     flake8 ./forecast
     mypy ./forecast --ignore-missing-imports
     black --check .
@@ -78,16 +109,19 @@ commands =
     pytest tests/ --disable-warnings -s
 
 [testenv:py312]
-description = run pytest and coverage on 3.12
+description = run pytest on 3.12
+commands =
+    pytest tests/ --disable-warnings -s
+
+[testenv:py313]
+description = run pytest and coverage on 3.13
 commands =
     pytest tests/ --cov=forecast --cov-report=xml --disable-warnings -s
 """
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:tool.poetry.version"]
-version_variables = [
-    "forecast/__init__.py:__version__"
-]
+version_variables = ["forecast/__init__.py:__version__"]
 
 [tool.semantic_release.branches.version]
 match = "main"

@@ -14,19 +14,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip
           restore-keys: ${{ runner.os }}-pip
-  
+
   tests:
     needs: checkout
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]  # other OS?
-        python-version: ['3.10', '3.11', '3.12']
+        python: ['3.10', '3.11', '3.12', '3.13']
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -36,12 +36,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up python ${{ matrix.python-version }}
+      - name: Set up python ${{ matrix.python }}
         id: setup-python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-      
+          python-version: ${{ matrix.python }}
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
