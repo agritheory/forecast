@@ -11,15 +11,15 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
 python = ">=3.10"
-numpy = "^1.26.4"
-pandas = "^2.2.2"
-scipy = "^1.14.0"
 
 [tool.poetry.group.dev.dependencies]
 nbdev = "^2.3.25"
 pytest = "^8.0.0"
 pytest-cov = "^5.0.0"
 matplotlib = "^3.3.0"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+scipy = "^1.14.0"
 jupyterlab = "^2.2.5"
 
 [tool.black]
@@ -88,6 +88,7 @@ version_toml = ["pyproject.toml:tool.poetry.version"]
 version_variables = [
     "forecast/__init__.py:__version__"
 ]
+build_command = "echo 1"
 
 [tool.semantic_release.branches.version]
 match = "main"
