@@ -110,9 +110,26 @@ class TestBins:
 		with pytest.raises(ValueError):
 			Period().get_date_bins(date_dec_31_23, date_jan_2_23)
 
-	def test_no_custom_days_provided(self, date_jan_2_23, date_dec_31_23):
+	def test_custom_period_errors(self, date_jan_2_23, date_dec_31_23):
+		# No custom_period provided
 		with pytest.raises(ValueError):
 			Period().get_date_bins(date_jan_2_23, date_dec_31_23, "Custom Days")
+
+		# Provided custom_period not an integer or list
+		with pytest.raises(ValueError):
+			Period().get_date_bins(date_jan_2_23, date_dec_31_23, "Custom Days", custom_period=2.5)
+
+		# Provided custom_period is integer but value is < 1
+		with pytest.raises(ValueError):
+			Period().get_date_bins(date_jan_2_23, date_dec_31_23, "Custom Days", custom_period=-2)
+
+		# Provided custom_period is list but contains a non-integer value
+		with pytest.raises(ValueError):
+			Period().get_date_bins(date_jan_2_23, date_dec_31_23, "Fiscal Weeks", custom_period=[1, 2.5])
+
+		# Provided custom_period is list of integers, but contains a value < 1
+		with pytest.raises(ValueError):
+			Period().get_date_bins(date_jan_2_23, date_dec_31_23, "Fiscal Weeks", custom_period=[1, 2, 0])
 
 	def test_inclusive_end_date_is_new_period_start(self, date_nov_1_23, date_nov_1_25):
 		output = [
@@ -412,8 +429,85 @@ class TestBins:
 			(datetime.date(2023, 3, 30), datetime.date(2023, 3, 31)),
 		]
 		bins = Period().get_date_bins(
-			date_mar_15_23, date_mar_31_23, "Custom Days", inclusive=True, custom_days=5
+			date_mar_15_23, date_mar_31_23, "Custom Days", inclusive=True, custom_period=5
 		)
+		assert bins == output
+
+	def test_custom_days_sequence(self, date_jan_2_23):
+		ed = datetime.date(2023, 1, 15)
+		output = [
+			(datetime.date(2023, 1, 2), datetime.date(2023, 1, 6)),
+			(datetime.date(2023, 1, 7), datetime.date(2023, 1, 8)),
+			(datetime.date(2023, 1, 9), datetime.date(2023, 1, 13)),
+			(datetime.date(2023, 1, 14), datetime.date(2023, 1, 15)),
+		]
+		bins = Period().get_date_bins(
+			date_jan_2_23, ed, "Custom Days", inclusive=True, custom_period=[5, 2]
+		)
+		assert bins == output
+
+	def test_fiscal_weeks_454_monday(self, date_jan_2_23, date_dec_31_23):
+		output = [
+			(datetime.date(2023, 1, 2), datetime.date(2023, 1, 29)),
+			(datetime.date(2023, 1, 30), datetime.date(2023, 3, 5)),
+			(datetime.date(2023, 3, 6), datetime.date(2023, 4, 2)),
+			(datetime.date(2023, 4, 3), datetime.date(2023, 4, 30)),
+			(datetime.date(2023, 5, 1), datetime.date(2023, 6, 4)),
+			(datetime.date(2023, 6, 5), datetime.date(2023, 7, 2)),
+			(datetime.date(2023, 7, 3), datetime.date(2023, 7, 30)),
+			(datetime.date(2023, 7, 31), datetime.date(2023, 9, 3)),
+			(datetime.date(2023, 9, 4), datetime.date(2023, 10, 1)),
+			(datetime.date(2023, 10, 2), datetime.date(2023, 10, 29)),
+			(datetime.date(2023, 10, 30), datetime.date(2023, 12, 3)),
+			(datetime.date(2023, 12, 4), datetime.date(2023, 12, 31)),
+		]
+		bins = Period().get_date_bins(
+			date_jan_2_23, date_dec_31_23, "Fiscal Weeks", inclusive=True, custom_period=[4, 5, 4]
+		)
+		assert bins == output
+
+	def test_fiscal_weeks_454_sunday(self, date_jan_1_23, date_dec_31_23):
+		output = [
+			(datetime.date(2023, 1, 1), datetime.date(2023, 1, 28)),
+			(datetime.date(2023, 1, 29), datetime.date(2023, 3, 4)),
+			(datetime.date(2023, 3, 5), datetime.date(2023, 4, 1)),
+			(datetime.date(2023, 4, 2), datetime.date(2023, 4, 29)),
+			(datetime.date(2023, 4, 30), datetime.date(2023, 6, 3)),
+			(datetime.date(2023, 6, 4), datetime.date(2023, 7, 1)),
+			(datetime.date(2023, 7, 2), datetime.date(2023, 7, 29)),
+			(datetime.date(2023, 7, 30), datetime.date(2023, 9, 2)),
+			(datetime.date(2023, 9, 3), datetime.date(2023, 9, 30)),
+			(datetime.date(2023, 10, 1), datetime.date(2023, 10, 28)),
+			(datetime.date(2023, 10, 29), datetime.date(2023, 12, 2)),
+			(datetime.date(2023, 12, 3), datetime.date(2023, 12, 30)),
+		]
+		bins = Period().get_date_bins(
+			date_jan_1_23, date_dec_31_23, "Fiscal Weeks", inclusive=False, custom_period=[4, 5, 4]
+		)
+		assert bins == output
+
+	def test_fiscal_weeks_quarter_monday(self, date_jan_2_23, date_dec_31_23):
+		output = [
+			(datetime.date(2023, 1, 2), datetime.date(2023, 4, 2)),
+			(datetime.date(2023, 4, 3), datetime.date(2023, 7, 2)),
+			(datetime.date(2023, 7, 3), datetime.date(2023, 10, 1)),
+			(datetime.date(2023, 10, 2), datetime.date(2023, 12, 31)),
+		]
+		bins = Period().get_date_bins(
+			date_jan_2_23, date_dec_31_23, "Fiscal Weeks", inclusive=True, custom_period=13
+		)
+		assert bins == output
+
+	def test_fiscal_weeks_quarter_saturday(self):
+		sd = datetime.date(2022, 12, 31)
+		ed = datetime.date(2023, 12, 29)
+		output = [
+			(datetime.date(2022, 12, 31), datetime.date(2023, 3, 31)),
+			(datetime.date(2023, 4, 1), datetime.date(2023, 6, 30)),
+			(datetime.date(2023, 7, 1), datetime.date(2023, 9, 29)),
+			(datetime.date(2023, 9, 30), datetime.date(2023, 12, 29)),
+		]
+		bins = Period().get_date_bins(sd, ed, "Fiscal Weeks", inclusive=True, custom_period=13)
 		assert bins == output
 
 	def test_cal_weekly_standard(self, date_jan_2_23, date_feb_13_23):
@@ -745,8 +839,37 @@ class TestLabels:
 	def test_custom_days_labels(self, date_mar_15_23, date_mar_31_23):
 		output = ["03/19/23", "03/24/23", "03/29/23", "03/31/23"]
 		p = Period(date_mar_15_23, date_mar_31_23, "Custom Days")
-		bins = p.get_date_bins(inclusive=True, custom_days=5)
+		bins = p.get_date_bins(inclusive=True, custom_period=5)
 		labels = p.get_period_labels(bins)
+		assert labels == output
+
+	def test_fiscal_weeks_454_sunday_labels(self, date_jan_1_23, date_dec_31_23):
+		output = [
+			"1 (4w)-23",
+			"2 (5w)-23",
+			"3 (4w)-23",
+			"4 (4w)-23",
+			"5 (5w)-23",
+			"6 (4w)-23",
+			"7 (4w)-23",
+			"8 (5w)-23",
+			"9 (4w)-23",
+			"10 (4w)-23",
+			"11 (5w)-23",
+			"12 (4w)-23",
+		]
+		p = Period(date_jan_1_23, date_dec_31_23, "Fiscal Weeks")
+		bins = p.get_date_bins(inclusive=False, custom_period=[4, 5, 4])
+		labels = p.get_period_labels(bins)
+		assert labels == output
+
+	def test_fiscal_weeks_quarter_saturday_labels(self):
+		sd = datetime.date(2022, 12, 31)
+		ed = datetime.date(2023, 12, 29)
+		output = ["1 (13w)-22", "2 (13w)-23", "3 (13w)-23", "4 (13w)-23"]
+		p = Period(sd, ed, "Fiscal Weeks")
+		bins = p.get_date_bins(inclusive=True, custom_period=13)
+		labels = p.get_period_labels(bins, use_bin_start_date_for_label=True)
 		assert labels == output
 
 	def test_weekly_labels(self, date_jan_5_23):
