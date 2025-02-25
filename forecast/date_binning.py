@@ -27,9 +27,11 @@ class Period:
 			"ISO Semiannual (26 Weeks)": [1, 27],
 			"ISO Annual": [1],
 			# Calendar pattern: (date part to increment, step to increment by)
-			# "Custom Days" and "Fiscal Weeks" added in get_date_bins as needed
+			# "Custom Days" and "Fiscal Weeks" updated in get_date_bins as needed
+			"Custom Days": ("days", 1),
 			"Weekly": ("weeks", 1),
 			"Biweekly": ("weeks", 2),
+			"Fiscal Weeks": ("weeks", 1),
 			"Calendar Month": ("months", 1),
 			"Monthly": ("months", 1),
 			"Calendar Quarter": ("months", 3),
@@ -189,7 +191,7 @@ class Period:
 		end_date: datetime.date | None = None,
 		periodicity: str | None = None,
 		inclusive: bool = True,
-		custom_period: int | list[int] | None = None,
+		custom_period: int | list[int] = 1,
 	) -> list[tuple[datetime.date, datetime.date]]:
 		"""
 		Gets the starting dates for all periods falling within the time span from `start_date` to
@@ -219,11 +221,13 @@ class Period:
 		    - "ISO Semiannual (26 Weeks)": semiannual bins of 26 ISO week periods
 		    - "ISO Annual": bins by ISO year
 		    - "Custom Days": bins starting on `start_date` with a number of days between them as
-		    given by `custom_period` (may be a single integer or sequence that's cycled over)
+		    given by `custom_period` (may be a single integer or sequence that's cycled over). The
+		        default value is 1 to produce daily bins
 		    - "Weekly": weekly bins starting on `start_date`'s weekday
 		    - "Biweekly": bins of 2-week periods, starting on `start_date`'s weekday
 		    - "Fiscal Weeks": bins starting on `start_date` with a number of weeks between them as
-		    given by `custom_period` (this may be a single integer or a sequence)
+		    given by `custom_period` (may be a single integer or sequence that's cycled over). The
+		        default value is 1 to produce weekly bins
 		    - "Calendar Month": bins by calendar month
 		    - "Monthly": monthly bins starting on `start_date`
 		    - "Calendar Quarter": bins of 3-month periods based on a calendar year (Jan-Mar, Apr-
@@ -235,9 +239,9 @@ class Period:
 		    inclusive=True) or the day prior to `end_date` (if inclusive=False)
 		:param inclusive: if resulting bins include the end_date (inclusive=True) or ends the day
 		before (inclusive=False)
-		:param custom_period: a single or sequence of integers that specifies the days (for
-		"Custom Days") or weeks (for "Fiscal Weeks") in a bin
-		periodicity is selected
+		:param custom_period: a single or sequence of integers that specifies the number of days
+		(for "Custom Days") or weeks (for "Fiscal Weeks") in a bin. Ignored for other periodicity
+		options
 		:return: list of tuples in form `(datetime.date object, datetime.date object)`
 		"""
 		start_date = start_date or self.start_date
@@ -254,16 +258,15 @@ class Period:
 			raise ValueError("End date must be after start date.")
 
 		if periodicity in ["Custom Days", "Fiscal Weeks"]:
-			# and (not isinstance(custom_period, int) or custom_period < 1):
-			if not custom_period or not (isinstance(custom_period, int) or isinstance(custom_period, list)):
-				raise ValueError(f"{periodicity} periodicity requires a custom_period.")
+			if not (isinstance(custom_period, int) or isinstance(custom_period, list)) or (
+				isinstance(custom_period, list) and not all([isinstance(n, int) for n in custom_period])
+			):
+				raise ValueError("custom_period must be an integer or list of integers.")
 
 			if isinstance(custom_period, int) and custom_period < 1:
 				raise ValueError(f"{periodicity} periodicity requires an integer value > 0 for custom_period.")
 
-			if isinstance(custom_period, list) and (
-				not all([isinstance(n, int) for n in custom_period]) or any([n < 1 for n in custom_period])
-			):
+			if isinstance(custom_period, list) and any([n < 1 for n in custom_period]):
 				raise ValueError(f"{periodicity} periodicity requires integer values > 0 for custom_period.")
 
 		effective_end_date = end_date if not inclusive else end_date + relativedelta(days=1)
@@ -291,7 +294,7 @@ class Period:
 		self,
 		bins: list[tuple[datetime.date, datetime.date]],
 		periodicity: str = "ISO Week",
-		custom_period: int | list[int] | None = None,
+		custom_period: int | list[int] = 1,
 	) -> list[tuple[datetime.date, datetime.date]]:
 		"""
 		Converts date bins from their original periodicity into bins for new given `periodicity`
@@ -300,8 +303,9 @@ class Period:
 		:param bins: list of tuples in form `(datetime.date object, datetime.date object)`
 		:param periodicity: str; how to determine the periods within the time span from
 		`start_date` to `end_date`. Default is "ISO Week"
-		:param custom_period: a single or sequence of integers that specifies the days (for
-		"Custom Days") or weeks (for "Fiscal Weeks") in a bin
+		:param custom_period: a single or sequence of integers that specifies the number of days
+		(for "Custom Days") or weeks (for "Fiscal Weeks") in a bin. Ignored for other periodicity
+		options
 		:return: list of tuples in form `(datetime.date object, datetime.date object)`
 		"""
 		if not bins:
@@ -321,7 +325,7 @@ class Period:
 		data,
 		bins: list[tuple[datetime.date, datetime.date]],
 		periodicity: str = "ISO Week",
-		custom_period: int | list[int] | None = None,
+		custom_period: int | list[int] = 1,
 	):
 		"""
 		Redistributes numeric `data` for the periods specified by `bins` into new date periods
@@ -334,8 +338,9 @@ class Period:
 		represent the date ranges aligning with the given numeric data
 		:param periodicity: str; how to determine the periods within the same time span as `bins`.
 		Default is "ISO Week"
-		:param custom_period: a single or sequence of integers that specifies the days (for
-		"Custom Days") or weeks (for "Fiscal Weeks") in a bin
+		:param custom_period: a single or sequence of integers that specifies the number of days
+		(for "Custom Days") or weeks (for "Fiscal Weeks") in a bin. Ignored for other periodicity
+		options
 		:return: OrderedDict; the keys are tuples of datetime.date objects representing the bins
 		for the new periodicity, the values are the redistributed numeric data in Decimal format
 		"""

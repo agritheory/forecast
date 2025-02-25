@@ -111,10 +111,6 @@ class TestBins:
 			Period().get_date_bins(date_dec_31_23, date_jan_2_23)
 
 	def test_custom_period_errors(self, date_jan_2_23, date_dec_31_23):
-		# No custom_period provided
-		with pytest.raises(ValueError):
-			Period().get_date_bins(date_jan_2_23, date_dec_31_23, "Custom Days")
-
 		# Provided custom_period not an integer or list
 		with pytest.raises(ValueError):
 			Period().get_date_bins(date_jan_2_23, date_dec_31_23, "Custom Days", custom_period=2.5)
@@ -421,6 +417,17 @@ class TestBins:
 		assert bins == output
 
 	# Calendar Period Tests
+	def test_custom_days_default(self, date_jan_1_23, date_jan_5_23):
+		output = [
+			(datetime.date(2023, 1, 1), datetime.date(2023, 1, 1)),
+			(datetime.date(2023, 1, 2), datetime.date(2023, 1, 2)),
+			(datetime.date(2023, 1, 3), datetime.date(2023, 1, 3)),
+			(datetime.date(2023, 1, 4), datetime.date(2023, 1, 4)),
+			(datetime.date(2023, 1, 5), datetime.date(2023, 1, 5)),
+		]
+		bins = Period().get_date_bins(date_jan_1_23, date_jan_5_23, "Custom Days", inclusive=True)
+		assert bins == output
+
 	def test_custom_days(self, date_mar_15_23, date_mar_31_23):
 		output = [
 			(datetime.date(2023, 3, 15), datetime.date(2023, 3, 19)),
@@ -444,6 +451,17 @@ class TestBins:
 		bins = Period().get_date_bins(
 			date_jan_2_23, ed, "Custom Days", inclusive=True, custom_period=[5, 2]
 		)
+		assert bins == output
+
+	def test_fiscal_weeks_default(self, date_jan_1_23):
+		ed = datetime.date(2023, 1, 28)
+		output = [
+			(datetime.date(2023, 1, 1), datetime.date(2023, 1, 7)),
+			(datetime.date(2023, 1, 8), datetime.date(2023, 1, 14)),
+			(datetime.date(2023, 1, 15), datetime.date(2023, 1, 21)),
+			(datetime.date(2023, 1, 22), datetime.date(2023, 1, 28)),
+		]
+		bins = Period().get_date_bins(date_jan_1_23, ed, "Fiscal Weeks", inclusive=True)
 		assert bins == output
 
 	def test_fiscal_weeks_454_monday(self, date_jan_2_23, date_dec_31_23):
