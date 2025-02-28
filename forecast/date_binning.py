@@ -27,9 +27,11 @@ class Period:
 			"ISO Semiannual (26 Weeks)": [1, 27],
 			"ISO Annual": [1],
 			# Calendar pattern: (date part to increment, step to increment by)
-			# "Custom Days" added in get_date_bins as needed
+			# "Custom Days" and "Fiscal Weeks" updated in get_date_bins as needed
+			"Custom Days": ("days", 1),
 			"Weekly": ("weeks", 1),
 			"Biweekly": ("weeks", 2),
+			"Fiscal Weeks": ("weeks", 1),
 			"Calendar Month": ("months", 1),
 			"Monthly": ("months", 1),
 			"Calendar Quarter": ("months", 3),
@@ -129,39 +131,42 @@ class Period:
 		:return: list bin start dates
 		"""
 		period, delta = self.date_math_patterns[periodicity]
+		delta = [delta] if isinstance(delta, int) else delta
+		seq = cycle(delta)
+
 		r = []
 
 		if period == "days":
 			while start_date < end_date:
 				r.append(start_date)
-				start_date += relativedelta(days=delta)
+				start_date += relativedelta(days=next(seq))
 
 		elif period == "weeks":
 			while start_date < end_date:
 				r.append(start_date)
-				start_date += relativedelta(weeks=delta)
+				start_date += relativedelta(weeks=next(seq))
 
 		# For "Calendar" periodicities, adjust start_date before incrementing if not first day of period
 		elif period == "months":
 			if periodicity == "Calendar Month" and start_date.day != 1:
 				r.append(start_date)
-				start_date = start_date.replace(day=1) + relativedelta(months=delta)
+				start_date = start_date.replace(day=1) + relativedelta(months=next(seq))
 			elif periodicity == "Calendar Quarter":
 				r.append(start_date)
-				start_date = self._get_current_quarter_start(start_date) + relativedelta(months=delta)
+				start_date = self._get_current_quarter_start(start_date) + relativedelta(months=next(seq))
 
 			while start_date < end_date:
 				r.append(start_date)
-				start_date += relativedelta(months=delta)
+				start_date += relativedelta(months=next(seq))
 
 		elif period == "years":
 			if periodicity == "Calendar Year" and (start_date.day != 1 or start_date.month != 1):
 				r.append(start_date)
-				start_date = start_date.replace(month=1, day=1) + relativedelta(years=delta)
+				start_date = start_date.replace(month=1, day=1) + relativedelta(years=next(seq))
 
 			while start_date < end_date:
 				r.append(start_date)
-				start_date += relativedelta(years=delta)
+				start_date += relativedelta(years=next(seq))
 
 		return r
 
@@ -186,7 +191,7 @@ class Period:
 		end_date: datetime.date | None = None,
 		periodicity: str | None = None,
 		inclusive: bool = True,
-		custom_days: int | None = None,
+		custom_period: int | list[int] = 1,
 	) -> list[tuple[datetime.date, datetime.date]]:
 		"""
 		Gets the starting dates for all periods falling within the time span from `start_date` to
@@ -207,30 +212,36 @@ class Period:
 		    - "ISO Week" (default): weekly bins starting on a Monday
 		    - "ISO Biweekly": bins of 2 ISO week periods
 		    - "ISO Month (4 Weeks)": monthly bins of 4 ISO week periods assuming ISO weeks are put
-		            in months with a pattern of 4 weeks each
+		    in months with a pattern of 4 weeks each
 		    - "ISO Month (4 + 5 + 4)": monthly bins of ISO week periods assuming ISO weeks are put
-		            in months with a pattern of 4 weeks, 5 weeks, then 4 weeks, repeating
+		    in months with a pattern of 4 weeks, 5 weeks, then 4 weeks, repeating
 		    - "ISO Month (4 + 4 + 5)": monthly bins of ISO week periods assuming ISO weeks are put
-		            in months with a pattern of 4 weeks, 4 weeks, then 5 weeks, repeating
+		    n months with a pattern of 4 weeks, 4 weeks, then 5 weeks, repeating
 		    - "ISO Quarter (13 Weeks)": quarterly bins of 13 ISO week periods
 		    - "ISO Semiannual (26 Weeks)": semiannual bins of 26 ISO week periods
 		    - "ISO Annual": bins by ISO year
 		    - "Custom Days": bins starting on `start_date` with a number of days between them as
-		        given by `custom_days`
+		    given by `custom_period` (may be a single integer or sequence that's cycled over). The
+		        default value is 1 to produce daily bins
 		    - "Weekly": weekly bins starting on `start_date`'s weekday
 		    - "Biweekly": bins of 2-week periods, starting on `start_date`'s weekday
+		    - "Fiscal Weeks": bins starting on `start_date` with a number of weeks between them as
+		    given by `custom_period` (may be a single integer or sequence that's cycled over). The
+		        default value is 1 to produce weekly bins
 		    - "Calendar Month": bins by calendar month
-		        - "Monthly": monthly bins starting on `start_date`
-		    - "Calendar Quarter": bins of 3-month periods based on a calendar year (Jan-Mar, Apr-Jun, etc.)
-		        - "Quarterly": bins of 3-month periods starting on `start_date`
+		    - "Monthly": monthly bins starting on `start_date`
+		    - "Calendar Quarter": bins of 3-month periods based on a calendar year (Jan-Mar, Apr-
+		    Jun, etc.)
+		    - "Quarterly": bins of 3-month periods starting on `start_date`
 		    - "Calendar Year": calendar year bins (Jan-Dec)
 		    - "Annually": yearly bins starting from `start_date`
 		    - "Entire Period": one bin from `start_date` to either `end_date` (if
-		        inclusive=True) or the day prior to `end_date` (if inclusive=False)
-		:param inclusive:if resulting bins include the end_date (inclusive=True) or ends the day
+		    inclusive=True) or the day prior to `end_date` (if inclusive=False)
+		:param inclusive: if resulting bins include the end_date (inclusive=True) or ends the day
 		before (inclusive=False)
-		:param custom_days: number of days per bin, only applicable only if "Custom Days"
-		periodicity is selected
+		:param custom_period: a single or sequence of integers that specifies the number of days
+		(for "Custom Days") or weeks (for "Fiscal Weeks") in a bin. Ignored for other periodicity
+		options
 		:return: list of tuples in form `(datetime.date object, datetime.date object)`
 		"""
 		start_date = start_date or self.start_date
@@ -246,15 +257,26 @@ class Period:
 		if end_date <= start_date:
 			raise ValueError("End date must be after start date.")
 
-		if periodicity == "Custom Days" and (not isinstance(custom_days, int) or custom_days < 1):
-			raise ValueError("Custom Days periodicity requires an integer value > 0 for custom_days.")
+		if periodicity in ["Custom Days", "Fiscal Weeks"]:
+			if not (isinstance(custom_period, int) or isinstance(custom_period, list)) or (
+				isinstance(custom_period, list) and not all([isinstance(n, int) for n in custom_period])
+			):
+				raise ValueError("custom_period must be an integer or list of integers.")
+
+			if isinstance(custom_period, int) and custom_period < 1:
+				raise ValueError(f"{periodicity} periodicity requires an integer value > 0 for custom_period.")
+
+			if isinstance(custom_period, list) and any([n < 1 for n in custom_period]):
+				raise ValueError(f"{periodicity} periodicity requires integer values > 0 for custom_period.")
 
 		effective_end_date = end_date if not inclusive else end_date + relativedelta(days=1)
-		periodicity = self.periodicity if not periodicity else periodicity
 		is_iso = "iso" in periodicity.lower()
 
 		if periodicity == "Custom Days":
-			self.date_math_patterns.update({"Custom Days": ("days", custom_days)})
+			self.date_math_patterns.update({"Custom Days": ("days", custom_period)})
+
+		if periodicity == "Fiscal Weeks":
+			self.date_math_patterns.update({"Fiscal Weeks": ("weeks", custom_period)})
 
 		if periodicity == "Entire Period":
 			return [(start_date, end_date if inclusive else end_date - relativedelta(days=1))]
@@ -272,7 +294,7 @@ class Period:
 		self,
 		bins: list[tuple[datetime.date, datetime.date]],
 		periodicity: str = "ISO Week",
-		custom_days: int | None = None,
+		custom_period: int | list[int] = 1,
 	) -> list[tuple[datetime.date, datetime.date]]:
 		"""
 		Converts date bins from their original periodicity into bins for new given `periodicity`
@@ -281,6 +303,9 @@ class Period:
 		:param bins: list of tuples in form `(datetime.date object, datetime.date object)`
 		:param periodicity: str; how to determine the periods within the time span from
 		`start_date` to `end_date`. Default is "ISO Week"
+		:param custom_period: a single or sequence of integers that specifies the number of days
+		(for "Custom Days") or weeks (for "Fiscal Weeks") in a bin. Ignored for other periodicity
+		options
 		:return: list of tuples in form `(datetime.date object, datetime.date object)`
 		"""
 		if not bins:
@@ -292,7 +317,7 @@ class Period:
 			end_date=end_date,
 			periodicity=periodicity,
 			inclusive=True,
-			custom_days=custom_days,
+			custom_period=custom_period,
 		)
 
 	def redistribute_data(
@@ -300,7 +325,7 @@ class Period:
 		data,
 		bins: list[tuple[datetime.date, datetime.date]],
 		periodicity: str = "ISO Week",
-		custom_days: int | None = None,
+		custom_period: int | list[int] = 1,
 	):
 		"""
 		Redistributes numeric `data` for the periods specified by `bins` into new date periods
@@ -313,6 +338,9 @@ class Period:
 		represent the date ranges aligning with the given numeric data
 		:param periodicity: str; how to determine the periods within the same time span as `bins`.
 		Default is "ISO Week"
+		:param custom_period: a single or sequence of integers that specifies the number of days
+		(for "Custom Days") or weeks (for "Fiscal Weeks") in a bin. Ignored for other periodicity
+		options
 		:return: OrderedDict; the keys are tuples of datetime.date objects representing the bins
 		for the new periodicity, the values are the redistributed numeric data in Decimal format
 		"""
@@ -326,7 +354,7 @@ class Period:
 			d_per_day += [d / n] * n
 
 		# Get new bins
-		new_bins = self.convert_dates(bins, periodicity, custom_days)
+		new_bins = self.convert_dates(bins, periodicity, custom_period)
 
 		# Get number of days of new bins and convert to cumulative indices
 		indices = accumulate([(b[1] - b[0]).days + 1 for b in new_bins], initial=0)
@@ -341,7 +369,7 @@ class Period:
 		bins: list[tuple[datetime.date, datetime.date]],
 		periodicity: str | None = None,
 		date_format_string: str = "",
-		use_bin_start_date_for_label: bool = True,
+		use_bin_start_date_for_label: bool | None = None,
 	) -> list[str]:
 		"""
 		Returns the formatted date labels for the provided bins.
@@ -352,11 +380,10 @@ class Period:
 		label format for the given `bins`. Uses the class periodicity as a fallback
 		:param date_format_string: a custom date format string to apply to the bins to generate
 		labels. Can support any Python strftime formatters
-		:param use_bin_start_date_for_label: only applies if `date_format_string` provided.
-		Date bins are pairs of datetime.date objects that represent the start date and end date of
-		each bin. If True, the custom format string is applied to the start date of the pair, if
-		False, it's applied the the end date. If `date_format_string` isn't provided, the labels
-		use the start date for ISO-based periodicities and the end date for Calendar-based ones
+		:param use_bin_start_date_for_label: Date bins are pairs of datetime.date objects that
+		represent the start date and end date of each bin. If True, it uses the bin's start date
+		to create the label, if False it uses the bin's end date. If None, it uses the start date
+		for any ISO-based periodicity and it uses the end date for all other periodicity options
 		:return: the labels for the given date bins
 
 		If `date_format_string` isn't provided, function returns the following built-in formats by
@@ -372,6 +399,8 @@ class Period:
 		- "Custom Days": "MM/DD/YY"
 		- "Weekly": "MM/DD/YY"
 		- "Biweekly": "MM/DD/YY"
+		- "Fiscal Weeks": "I (Nw)-YY" (where I is the 1-based bin index, N is the number of weeks
+		in the bin group), the year is calculated per `use_bin_start_date_for_label`
 		- "Calendar Month": "MMM-YY"
 		- "Calendar Quarter": "MM-YYQ"
 		- "Calendar Year": "MM/DD/YY"
@@ -379,13 +408,18 @@ class Period:
 		- "Entire Period": "MM/DD/YY-MM/DD/YY"
 		"""
 		periodicity = periodicity or self.periodicity
-		date_idx = int(not use_bin_start_date_for_label)
+		is_iso = "iso" in periodicity.lower()
+		date_idx = (
+			int(not is_iso)
+			if use_bin_start_date_for_label is None
+			else int(not use_bin_start_date_for_label)
+		)
 
 		if not bins:
 			return []
 
-		if "iso" in periodicity.lower():
-			iso_data: list[tuple[int, int]] = [self._get_iso_week_and_year(p[0]) for p in bins]
+		if is_iso:
+			iso_data: list[tuple[int, int]] = [self._get_iso_week_and_year(p[date_idx]) for p in bins]
 
 		if date_format_string:
 			return [p[date_idx].strftime(date_format_string) for p in bins]
@@ -771,15 +805,15 @@ class Period:
 			p = bins[0]
 			return [f"{p[0].strftime('%m/%d/%y')}-{p[1].strftime('%m/%d/%y')}"]
 
-		# ISO-based periodicity - labels created off the start date from each bin
+		# ISO-based periodicity
 		elif periodicity == "ISO Week":
 			# Returns format: "Week N-YY"
 			return [f"Week {iso_w}-{str(iso_y)[-2:]}" for iso_w, iso_y in iso_data]
 		elif periodicity == "ISO Biweekly":
 			# Returns format: "Weeks N-N YY"
 			return [
-				f"Weeks {bin[0].isocalendar().week}-{bin[1].isocalendar().week} {str(bin[1].isocalendar().year)[-2:]}"
-				for bin in bins
+				f"Weeks {p[0].isocalendar().week}-{p[1].isocalendar().week} {str(p[date_idx].isocalendar().year)[-2:]}"
+				for p in bins
 			]
 		elif periodicity == "ISO Annual":
 			# Returns format: "YYYY"
@@ -788,16 +822,24 @@ class Period:
 			# Returns format: "MMM (Nw)-YY", "QN-YY", or "HYN-YY" for month, quarter, or semiannual periodicity
 			return [f"{iso_buckets[iso_w][periodicity]}-{str(iso_y)[-2:]}" for iso_w, iso_y in iso_data]
 
-		# Calendar-based periodicity - labels created off the end date from each bin
+		# Fiscal Weeks
+		elif periodicity == "Fiscal Weeks":
+			# Returns format: "I (Nw)-YY"
+			return [
+				f"{i} ({int(((p[1] - p[0]).days + 1) / 7)}w)-{p[date_idx].strftime('%y')}"
+				for i, p in enumerate(bins, start=1)
+			]
+
+		# Calendar-based periodicity
 		elif periodicity in ["Calendar Month", "Monthly"]:
 			# Returns format: "MMM-YY"
-			return [p[1].strftime("%b-%y") for p in bins]
+			return [p[date_idx].strftime("%b-%y") for p in bins]
 		elif periodicity in ["Calendar Quarter", "Quarterly"]:
 			# Returns format: "MM-YYQ"
-			return [f"{p[1].strftime('%m-%y')}Q" for p in bins]
+			return [f"{p[date_idx].strftime('%m-%y')}Q" for p in bins]
 		else:  # periodicity in ("Custom Days", "Weekly", "Biweekly", "Calendar Year", "Annually")
 			# Returns format: "MM/DD/YY"
-			return [p[1].strftime("%m/%d/%y") for p in bins]
+			return [p[date_idx].strftime("%m/%d/%y") for p in bins]
 
 	def _get_iso_week_and_year(self, date: datetime.date) -> tuple[int, int]:
 		"""
